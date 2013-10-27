@@ -12,11 +12,11 @@ Time Machine style backup with rsync. Should work on Linux, Mac OS X and Windows
 
 ## Examples
 	
-	# Backup the home folder to backup_drive
+* Backup the home folder to backup_drive
 	
 	$ rsync_tmbackup.sh /home /mnt/backup_drive  
 
-	# Backup with exclusion list:
+* Backup with exclusion list:
 	
 	$ rsync_tmbackup.sh /home /mnt/backup_drive excluded_patterns.txt
 	
