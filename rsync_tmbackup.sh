@@ -25,8 +25,11 @@ EXCLUSION_FILE=$3
 
 DEST_MARKER_FILE=$DEST_FOLDER/backup.marker
 if [ ! -f "$DEST_MARKER_FILE" ]; then
-	echo "Safety check failed - the destination doesn't appear to be a backup folder or drive."
-	echo "If it is a backup folder, manually add an empty file name \"$DEST_MARKER_FILE\""
+	echo "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
+	echo "If it is indeed a backup folder, you may add the marker file by running the following command:"
+	echo ""
+	echo "touch \"$DEST_MARKER_FILE\""
+	echo ""
 	exit 1
 fi
 
@@ -69,6 +72,9 @@ LINK_DEST_OPTION=""
 if [ "$LAST_TIME" == "" ]; then
 	echo "No previous backup - creating new one."
 else
+	# If the path is relative, it needs to be relative to the destination. To keep
+	# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
+	PREVIOUS_DEST=`cd \`dirname "$PREVIOUS_DEST"\`; pwd`"/"`basename "$PREVIOUS_DEST"`
 	echo "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
 	LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
 fi
@@ -105,10 +111,13 @@ fi
 CMD="$CMD $LINK_DEST_OPTION $SRC_FOLDER/ $DEST/"
 CMD="$CMD | grep -E '^deleting|[^/]$'"
 
+echo "Running command:"
+echo $CMD
+
 touch $INPROGRESS_FILE
 eval $CMD
 EXIT_CODE=$?
-if [ "EXIT_CODE" == "0" ]; then
+if [ "$EXIT_CODE" == "0" ]; then
 	rm $INPROGRESS_FILE
 else
 	echo "Error: Exited with error code $EXIT_CODE"
