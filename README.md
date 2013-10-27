@@ -4,27 +4,25 @@ Time Machine style backup with rsync. Should work on Linux, Mac OS X and Windows
 
 # Installation
 
-    git clone https://github.com/laurent22/rsync-time-backup
-
-or download "rsync_tmbackup.sh".
+	git clone https://github.com/laurent22/rsync-time-backup
 
 # Usage
 
-    rsync_tmbackup.sh <source> <destination> [excluded-pattern-path]
+	rsync_tmbackup.sh <source> <destination> [excluded-pattern-path]
 
 ## Examples
-    
-    # Backup the home folder to backup_drive
-    
-    rsync_tmbackup.sh /home /mnt/backup_drive  
+	
+	# Backup the home folder to backup_drive
+	
+	$ rsync_tmbackup.sh /home /mnt/backup_drive  
 
-    # Backup with exclusion list:
-    
-    $ rsync_tmbackup.sh /home /mnt/backup_drive excluded_patterns.txt
-    
+	# Backup with exclusion list:
+	
+	$ rsync_tmbackup.sh /home /mnt/backup_drive excluded_patterns.txt
+	
 ## Exclude file
 
-An optional exclude file can be provided as a third parameter. It should be compabible with the --exclude-from parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+An optional exclude file can be provided as a third parameter. It should be compabible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
 # Features
 
@@ -36,7 +34,7 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Resume feature - if a backup has failed or was interrupted, the tool will resume from there on the next backup.
 
-* Exclude file - support for pattern-based exclusion via rsync --exclude-from parameter.
+* Exclude file - support for pattern-based exclusion via the `--exclude-from` rsync parameter.
 
 * The application is one bash script that can be easily edited.
 
