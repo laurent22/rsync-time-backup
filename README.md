@@ -47,3 +47,7 @@ An optional exclude file can be provided as a third parameter. It should be comp
 # LICENSE
 
 [MIT](http://opensource.org/licenses/MIT)
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/laurent22/rsync-time-backup/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
