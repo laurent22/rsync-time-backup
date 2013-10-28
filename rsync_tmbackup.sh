@@ -103,6 +103,7 @@ CMD="$CMD --links"
 CMD="$CMD --hard-links"
 CMD="$CMD --delete"
 CMD="$CMD --delete-excluded"
+CMD="$CMD --one-file-system"
 CMD="$CMD --archive"
 CMD="$CMD --progress"
 if [ "$EXCLUSION_FILE" != "" ]; then
