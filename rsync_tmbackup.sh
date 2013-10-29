@@ -40,7 +40,6 @@ fi
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 DEST=$DEST_FOLDER/$NOW
 LAST_TIME=$(find $DEST_FOLDER -maxdepth 1 -type d -iname "*-*[0-9]" | sort | tail -n 1)
-echo "############################################ $LAST_TIME"
 PREVIOUS_DEST=$LAST_TIME
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 
