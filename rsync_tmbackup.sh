@@ -36,10 +36,10 @@ fi
 # -----------------------------------------------------------------------------
 # Setup additional variables
 # -----------------------------------------------------------------------------
-
+BACKUP_REGEX="^[[:digit:]][[:digit:]][[:digit:]][[:digit:]]-[[:digit:]][[:digit:]]-[[:digit:]][[:digit:]]-[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]$"
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 DEST=$DEST_FOLDER/$NOW
-LAST_TIME=$(ls -1 $DEST_FOLDER | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 1)
+LAST_TIME=$(ls -1 $DEST_FOLDER | grep "$BACKUP_REGEX" | tail -n 1)
 PREVIOUS_DEST=$DEST_FOLDER/$LAST_TIME
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 
@@ -52,10 +52,10 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		echo "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(ls -1 $DEST_FOLDER | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 2 | wc -l)
+		LINE_COUNT=$(ls -1 $DEST_FOLDER | grep "$BACKUP_REGEX" | tail -n 2 | wc -l)
 		mv $PREVIOUS_DEST $DEST
 		if [ "$LINE_COUNT" -gt 1 ]; then
-			SECOND_LAST_TIME=$(ls -1 $DEST_FOLDER | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 2 | head -n 1)
+			SECOND_LAST_TIME=$(ls -1 $DEST_FOLDER | grep "$BACKUP_REGEX" | tail -n 2 | head -n 1)
 			LAST_TIME=$SECOND_LAST_TIME
 		else
 			LAST_TIME=""
