@@ -39,7 +39,23 @@ fi
 
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 DEST=$DEST_FOLDER/$NOW
-LAST_TIME=$(find $DEST_FOLDER -maxdepth 1 -type d -regextype posix-extended -regex "^.*[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" | sort | tail -n 1)
+
+# Set LAST_TIME, LINE_CONUT and SECOND_LAST_TIME based on uname -s output for Mac OS compatibility
+# I guess there might be an more elegant way to do this
+case `uname -s` in
+	Darwin)
+		LAST_TIME=$(find -E $DEST_FOLDER -type d -iregex "./[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" -prune | sort | tail -n 1)
+		LINE_COUNT=$(find -E $DEST_FOLDER -type d -iregex "./[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" -prune | sort | tail -n 2 | wc -l)
+		SECOND_LAST_TIME=$(find -E $DEST_FOLDER -type d -iregex "./[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" -prune | sort | tail -n 2 | head -n 1)
+		;;
+
+	*)
+		LAST_TIME=$(find $DEST_FOLDER -type d -regextype posix-extended -regex "^.*[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" -prune | sort | tail -n 1)
+		LINE_COUNT=$(find $DEST_FOLDER -type d -regextype posix-extended -regex "^.*[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" -prune | sort | tail -n 2 | wc -l)
+		SECOND_LAST_TIME=$(find $DEST_FOLDER -type d -regextype posix-extended -regex "^.*[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" -prune | sort | tail -n 2 | head -n 1)
+		;;
+esac
+
 PREVIOUS_DEST=$LAST_TIME
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 
@@ -52,10 +68,9 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		echo "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(find $DEST_FOLDER -maxdepth 1 -type d -regextype posix-extended -regex "^.*[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" | sort | tail -n 2 | wc -l)
+		
 		mv $PREVIOUS_DEST $DEST
-		if [ "$LINE_COUNT" -gt 1 ]; then
-			SECOND_LAST_TIME=$(find $DEST_FOLDER -maxdepth 1 -type d -regextype posix-extended -regex "^.*[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}" | sort | tail -n 2 | head -n 1)
+		if [ "$LINE_COUNT" -gt 1 ]; then		
 			LAST_TIME=$SECOND_LAST_TIME
 		else
 			LAST_TIME=""
