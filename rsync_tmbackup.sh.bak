@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # -----------------------------------------------------------------------------
 # Log functions
@@ -152,14 +152,11 @@ while [ "1" ]; do
 	CMD="$CMD --one-file-system"
 	CMD="$CMD --archive"
 	CMD="$CMD --progress"
-	CMD="$CMD --itemize-changes"
-	CMD="$CMD --verbose"
 	CMD="$CMD --log-file '$LOG_FILE'"
 	if [ "$EXCLUSION_FILE" != "" ]; then
 		CMD="$CMD --exclude-from \"$EXCLUSION_FILE\""
 	fi
-	CMD="$CMD $LINK_DEST_OPTION"
-	CMD="$CMD $SRC_FOLDER/ $DEST/"
+	CMD="$CMD $LINK_DEST_OPTION $SRC_FOLDER/ $DEST/"
 	CMD="$CMD | grep -E '^deleting|[^/]$'"
 
 	fn_log_info "Running command:"
@@ -167,29 +164,16 @@ while [ "1" ]; do
 
 	touch $INPROGRESS_FILE
 	eval $CMD
-	RSYNC_EXIT_CODE=$?
+	EXIT_CODE=$?
 
 	# -----------------------------------------------------------------------------
 	# Check if we ran out of space
 	# -----------------------------------------------------------------------------
 
-	# TODO: find better way to check for out of space condition without parsing log.
 	grep --quiet "No space left on device (28)" "$LOG_FILE"
-	NO_SPACE_LEFT="$?"
-	if [ "$NO_SPACE_LEFT" != "0" ]; then
-		# This error might also happen if there is no space left
-		grep --quiet "Result too large (34)" "$LOG_FILE"
-		NO_SPACE_LEFT="$?"
-	fi
-		
-	rm -- "$LOG_FILE"
+	# TODO: delete log file
 	
-	if [ "$NO_SPACE_LEFT" == "0" ]; then
-		read -p "It looks like there is no space left on the destination. Delete old backup? (Y/n) " yn
-		case $yn in
-			[Nn]* ) exit 0;;
-		esac
-
+	if [ "$?" == "0" ]; then
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
 		
 		BACKUP_FOLDER_COUNT=$(ls -1 $DEST_FOLDER | grep "$BACKUP_FOLDER_PATTERN" | wc -l)
@@ -197,8 +181,6 @@ while [ "1" ]; do
 			fn_log_error "No space left on device, and no old backup to delete."
 			exit 1
 		fi
-		
-		# TODO: handle case where only two backup folders are left. In which case, need to remove --link-dest option
 		
 		OLDEST_BACKUP=$(ls -1 $DEST_FOLDER | grep "$BACKUP_FOLDER_PATTERN" | head -n 1)
 		if [ "$OLDEST_BACKUP" == "" ]; then
@@ -222,9 +204,9 @@ while [ "1" ]; do
 		continue
 	fi
 
-	if [ "$RSYNC_EXIT_CODE" != "0" ]; then
-		fn_log_error "Exited with error code $RSYNC_EXIT_CODE"
-		exit $RSYNC_EXIT_CODE
+	if [ "$EXIT_CODE" != "0" ]; then
+		fn_log_error "Exited with error code $EXIT_CODE"
+		exit $EXIT_CODE
 	fi
 	
 	rm $INPROGRESS_FILE
