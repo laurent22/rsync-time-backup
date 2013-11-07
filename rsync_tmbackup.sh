@@ -46,7 +46,7 @@ fi
 
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 DEST=$DEST_FOLDER/$NOW
-LAST_TIME=$(ls -1 -- $DEST_FOLDER | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 1)
+LAST_TIME=$(ls -1 -- "$DEST_FOLDER" | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 1)
 PREVIOUS_DEST=$DEST_FOLDER/$LAST_TIME
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 
@@ -59,10 +59,10 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		echo -- "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(ls -1 -- $DEST_FOLDER | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 2 | wc -l)
-		mv -- $PREVIOUS_DEST $DEST
+		LINE_COUNT=$(ls -1 -- "$DEST_FOLDER" | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 2 | wc -l)
+		mv -- "$PREVIOUS_DEST" "$DEST"
 		if [ "$LINE_COUNT" -gt 1 ]; then
-			SECOND_LAST_TIME=$(ls -1 -- $DEST_FOLDER | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 2 | head -n 1)
+			SECOND_LAST_TIME=$(ls -1 -- "$DEST_FOLDER" | grep "\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d" | tail -n 2 | head -n 1)
 			LAST_TIME=$SECOND_LAST_TIME
 		else
 			LAST_TIME=""
@@ -92,7 +92,7 @@ fi
 
 if [ ! -d "$DEST" ]; then
 	echo "Creating destination $DEST"
-	mkdir -p -- $DEST
+	mkdir -p -- "$DEST"
 fi
 
 # -----------------------------------------------------------------------------
@@ -123,11 +123,11 @@ CMD="$CMD | grep -E '^deleting|[^/]$'"
 echo "Running command:"
 echo $CMD
 
-touch -- $INPROGRESS_FILE
+touch -- "$INPROGRESS_FILE"
 eval $CMD
 EXIT_CODE=$?
 if [ "$EXIT_CODE" == "0" ]; then
-	rm -- $INPROGRESS_FILE
+	rm -- "$INPROGRESS_FILE"
 else
 	echo "Error: Exited with error code $EXIT_CODE"
 fi
