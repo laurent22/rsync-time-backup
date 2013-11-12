@@ -5,15 +5,15 @@
 # -----------------------------------------------------------------------------
 
 fn_log_info() {
-	echo "[RB INFO] $1"
+	echo "rsync_tmbackup: $1"
 }
 
 fn_log_warn() {
-	echo "[RB WARN] $1"
+	echo "rsync_tmbackup: [WARNING] $1"
 }
 
 fn_log_error() {
-	echo "[RB ERROR] $1"
+	echo "rsync_tmbackup: [ERROR] $1"
 }
 
 # -----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ fn_log_error() {
 # -----------------------------------------------------------------------------
 
 fn_terminate_script() {
-	echo "SIGINT caught"
+	echo "rsync_tmbackup: SIGINT caught."
 	exit 1
 }
 
@@ -34,6 +34,13 @@ trap 'fn_terminate_script' SIGINT
 SRC_FOLDER=${1%/}
 DEST_FOLDER=${2%/}
 EXCLUSION_FILE=$3
+
+for arg in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
+	if [[ "$arg" == *"'"* ]]; then
+		fn_log_error 'Arguments may not have any single quote characters.'
+		exit 1
+	fi
+done
 
 # -----------------------------------------------------------------------------
 # Check that the destination drive is a backup drive
@@ -72,7 +79,7 @@ NOW=$(date +"%Y-%m-%d-%H%M%S")
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST=$DEST_FOLDER/$NOW
-LAST_TIME=$(ls -1 $DEST_FOLDER | grep "$BACKUP_FOLDER_PATTERN" | tail -n 1)
+LAST_TIME=$(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | tail -n 1)
 PREVIOUS_DEST=$DEST_FOLDER/$LAST_TIME
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 
@@ -94,10 +101,10 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(ls -1 $DEST_FOLDER | grep "$BACKUP_FOLDER_PATTERN" | tail -n 2 | wc -l)
-		mv $PREVIOUS_DEST $DEST
+		LINE_COUNT=$(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | tail -n 2 | wc -l)
+		mv -- "$PREVIOUS_DEST" "$DEST"
 		if [ "$LINE_COUNT" -gt 1 ]; then
-			SECOND_LAST_TIME=$(ls -1 $DEST_FOLDER | grep "$BACKUP_FOLDER_PATTERN" | tail -n 2 | head -n 1)
+			SECOND_LAST_TIME=$(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | tail -n 2 | head -n 1)
 			LAST_TIME=$SECOND_LAST_TIME
 		else
 			LAST_TIME=""
@@ -119,7 +126,7 @@ while [ "1" ]; do
 	else
 		# If the path is relative, it needs to be relative to the destination. To keep
 		# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
-		PREVIOUS_DEST=`cd \`dirname "$PREVIOUS_DEST"\`; pwd`"/"`basename "$PREVIOUS_DEST"`
+		PREVIOUS_DEST=`cd \`dirname -- "$PREVIOUS_DEST"\`; pwd`"/"`basename -- "$PREVIOUS_DEST"`
 		fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
 		LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
 	fi
@@ -130,7 +137,7 @@ while [ "1" ]; do
 
 	if [ ! -d "$DEST" ]; then
 		fn_log_info "Creating destination $DEST"
-		mkdir -p $DEST
+		mkdir -p -- "$DEST"
 	fi
 
 	# -----------------------------------------------------------------------------
@@ -156,16 +163,17 @@ while [ "1" ]; do
 	CMD="$CMD --verbose"
 	CMD="$CMD --log-file '$LOG_FILE'"
 	if [ "$EXCLUSION_FILE" != "" ]; then
-		CMD="$CMD --exclude-from \"$EXCLUSION_FILE\""
+		# We've already checked that $EXCLUSION_FILE doesn't contain a single quote
+		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
 	fi
 	CMD="$CMD $LINK_DEST_OPTION"
-	CMD="$CMD $SRC_FOLDER/ $DEST/"
+	CMD="$CMD -- '$SRC_FOLDER/' '$DEST/'"
 	CMD="$CMD | grep -E '^deleting|[^/]$'"
 
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
 
-	touch $INPROGRESS_FILE
+	touch -- "$INPROGRESS_FILE"
 	eval $CMD
 	RSYNC_EXIT_CODE=$?
 
@@ -185,6 +193,7 @@ while [ "1" ]; do
 	rm -- "$LOG_FILE"
 	
 	if [ "$NO_SPACE_LEFT" == "0" ]; then
+		# TODO: -y flag
 		read -p "It looks like there is no space left on the destination. Delete old backup? (Y/n) " yn
 		case $yn in
 			[Nn]* ) exit 0;;
@@ -225,7 +234,8 @@ while [ "1" ]; do
 		exit $RSYNC_EXIT_CODE
 	fi
 	
-	rm $INPROGRESS_FILE
+	rm -- "$INPROGRESS_FILE"
+	# TODO: grep for "^rsync error:.*$" in log
 	fn_log_info "Backup completed without errors."
 	exit 0
 done
