@@ -74,7 +74,7 @@ fi
 # Setup additional variables
 # -----------------------------------------------------------------------------
 
-BACKUP_FOLDER_PATTERN="\d\d\d\d-\d\d-\d\d-\d\d\d\d\d\d"
+BACKUP_FOLDER_PATTERN="^[[:digit:]][[:digit:]][[:digit:]][[:digit:]]-[[:digit:]][[:digit:]]-[[:digit:]][[:digit:]]-[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]$"
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
