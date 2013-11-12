@@ -106,36 +106,37 @@ if [ -f "$INPROGRESS_FILE" ]; then
 	fi
 fi
 
-# -----------------------------------------------------------------------------
-# Check if we are doing an incremental backup (if previous backup exists) or not
-# -----------------------------------------------------------------------------
-
-LINK_DEST_OPTION=""
-if [ "$LAST_TIME" == "" ]; then
-	fn_log_info "No previous backup - creating new one."
-else
-	# If the path is relative, it needs to be relative to the destination. To keep
-	# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
-	PREVIOUS_DEST=`cd \`dirname "$PREVIOUS_DEST"\`; pwd`"/"`basename "$PREVIOUS_DEST"`
-	fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
-	LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
-fi
-
-# -----------------------------------------------------------------------------
-# Create destination folder if it doesn't already exists
-# -----------------------------------------------------------------------------
-
-if [ ! -d "$DEST" ]; then
-	fn_log_info "Creating destination $DEST"
-	mkdir -p $DEST
-fi
-
-# -----------------------------------------------------------------------------
-# Start backup
-# -----------------------------------------------------------------------------
-
-# Run in a loop to handle the "No space left on device" logic
+# Run in a loop to handle the "No space left on device" logic.
 while [ "1" ]; do
+
+	# -----------------------------------------------------------------------------
+	# Check if we are doing an incremental backup (if previous backup exists) or not
+	# -----------------------------------------------------------------------------
+
+	LINK_DEST_OPTION=""
+	if [ "$LAST_TIME" == "" ]; then
+		fn_log_info "No previous backup - creating new one."
+	else
+		# If the path is relative, it needs to be relative to the destination. To keep
+		# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
+		PREVIOUS_DEST=`cd \`dirname "$PREVIOUS_DEST"\`; pwd`"/"`basename "$PREVIOUS_DEST"`
+		fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
+		LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
+	fi
+
+	# -----------------------------------------------------------------------------
+	# Create destination folder if it doesn't already exists
+	# -----------------------------------------------------------------------------
+
+	if [ ! -d "$DEST" ]; then
+		fn_log_info "Creating destination $DEST"
+		mkdir -p $DEST
+	fi
+
+	# -----------------------------------------------------------------------------
+	# Start backup
+	# -----------------------------------------------------------------------------
+
 	LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
 
 	fn_log_info "Starting backup..."
@@ -151,7 +152,6 @@ while [ "1" ]; do
 	CMD="$CMD --delete-excluded"
 	CMD="$CMD --one-file-system"
 	CMD="$CMD --archive"
-	CMD="$CMD --progress"
 	CMD="$CMD --itemize-changes"
 	CMD="$CMD --verbose"
 	CMD="$CMD --log-file '$LOG_FILE'"
@@ -197,9 +197,7 @@ while [ "1" ]; do
 			fn_log_error "No space left on device, and no old backup to delete."
 			exit 1
 		fi
-		
-		# TODO: handle case where only two backup folders are left. In which case, need to remove --link-dest option
-		
+				
 		OLDEST_BACKUP=$(ls -1 $DEST_FOLDER | grep "$BACKUP_FOLDER_PATTERN" | head -n 1)
 		if [ "$OLDEST_BACKUP" == "" ]; then
 			fn_log_error "No space left on device, and cannot get path to oldest backup to delete."
