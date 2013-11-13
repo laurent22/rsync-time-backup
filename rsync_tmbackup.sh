@@ -74,13 +74,12 @@ fi
 # Setup additional variables
 # -----------------------------------------------------------------------------
 
-BACKUP_FOLDER_PATTERN="^[[:digit:]][[:digit:]][[:digit:]][[:digit:]]-[[:digit:]][[:digit:]]-[[:digit:]][[:digit:]]-[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]$"
+BACKUP_FOLDER_PATTERN=????-??-??-??????
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST=$DEST_FOLDER/$NOW
-LAST_TIME=$(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | tail -n 1)
-PREVIOUS_DEST=$DEST_FOLDER/$LAST_TIME
+PREVIOUS_DEST=$(find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune | sort | tail -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 
 # -----------------------------------------------------------------------------
@@ -97,19 +96,18 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -f "$INPROGRESS_FILE" ]; then
-	if [ "$LAST_TIME" != "" ]; then
+	if [ "$PREVIOUS_DEST" != "" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | tail -n 2 | wc -l)
+		LINE_COUNT=$(find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune | sort | tail -n 2 | wc -l)
 		mv -- "$PREVIOUS_DEST" "$DEST"
 		if [ "$LINE_COUNT" -gt 1 ]; then
-			SECOND_LAST_TIME=$(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | tail -n 2 | head -n 1)
-			LAST_TIME=$SECOND_LAST_TIME
+			PREVIOUS_PREVIOUS_DEST=$(find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune | sort | tail -n 2 | head -n 1)
+			PREVIOUS_DEST=$PREVIOUS_PREVIOUS_DEST
 		else
-			LAST_TIME=""
+			PREVIOUS_DEST=""
 		fi
-		PREVIOUS_DEST=$DEST_FOLDER/$LAST_TIME
 	fi
 fi
 
@@ -121,7 +119,7 @@ while [ "1" ]; do
 	# -----------------------------------------------------------------------------
 
 	LINK_DEST_OPTION=""
-	if [ "$LAST_TIME" == "" ]; then
+	if [ "$PREVIOUS_DEST" == "" ]; then
 		fn_log_info "No previous backup - creating new one."
 	else
 		# If the path is relative, it needs to be relative to the destination. To keep
@@ -201,20 +199,18 @@ while [ "1" ]; do
 
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
 		
-		BACKUP_FOLDER_COUNT=$(ls -1 $DEST_FOLDER | grep "$BACKUP_FOLDER_PATTERN" | wc -l)
+		BACKUP_FOLDER_COUNT=$(find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune | wc -l)
 		if [ "$BACKUP_FOLDER_COUNT" -lt "2" ]; then
 			fn_log_error "No space left on device, and no old backup to delete."
 			exit 1
 		fi
 				
-		OLDEST_BACKUP=$(ls -1 $DEST_FOLDER | grep "$BACKUP_FOLDER_PATTERN" | head -n 1)
-		if [ "$OLDEST_BACKUP" == "" ]; then
+		OLD_BACKUP_PATH=$(find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune | head -n 1)
+		if [ "$OLD_BACKUP_PATH" == "" ]; then
 			fn_log_error "No space left on device, and cannot get path to oldest backup to delete."
 			exit 1
 		fi
-		
-		OLD_BACKUP_PATH="$DEST_FOLDER/$OLDEST_BACKUP"
-		
+				
 		# Double-check that we're on a backup destination to be completely sure we're deleting the right folder
 		OLD_BACKUP_PARENT_PATH=$(dirname -- "$OLD_BACKUP_PATH")
 		if [ "$(fn_is_backup_destination $OLD_BACKUP_PARENT_PATH)" != "1" ]; then
