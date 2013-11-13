@@ -40,12 +40,10 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 # TODO
 
-* Check if there's enough space in the destination before doing the backup. Also automatically delete old backups.
+* Minor changes (see TODO comments in the source).
 
 # LICENSE
 
 [MIT](http://opensource.org/licenses/MIT)
 
-
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/laurent22/rsync-time-backup/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
