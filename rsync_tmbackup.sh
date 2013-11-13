@@ -78,12 +78,17 @@ fi
 # Setup additional variables
 # -----------------------------------------------------------------------------
 
+fn_find_backups() {
+    find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune
+}
+
+export IFS=$'\n' # Better for handling spaces in filenames.
 BACKUP_FOLDER_PATTERN=????-??-??-??????
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST=$DEST_FOLDER/$NOW
-PREVIOUS_DEST=$(find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune | sort | tail -n 1)
+PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 KEEP_ALL_DATE=$(date -d '-1 day' +%s)
 KEEP_DAILIES_DATE=$(date -d '-1 month' +%s)
@@ -106,10 +111,10 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune | sort | tail -n 2 | wc -l)
+		LINE_COUNT=$(fn_find_backups | sort | tail -n 2 | wc -l)
 		mv -- "$PREVIOUS_DEST" "$DEST"
 		if [ "$LINE_COUNT" -gt 1 ]; then
-			PREVIOUS_PREVIOUS_DEST=$(find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune | sort | tail -n 2 | head -n 1)
+			PREVIOUS_PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 2 | head -n 1)
 			PREVIOUS_DEST=$PREVIOUS_PREVIOUS_DEST
 		else
 			PREVIOUS_DEST=""
@@ -148,7 +153,8 @@ while [ "1" ]; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-	for date in $(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | sort -r); do
+	for fname in $(fn_find_backups | sort -r); do
+		date=$(basename "$fname")
 		stamp=$(fn_parse_date $date)
 
 		# Skip if failed to parse date...
