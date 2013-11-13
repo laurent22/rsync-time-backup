@@ -32,11 +32,12 @@ trap 'fn_terminate_script' SIGINT
 # -----------------------------------------------------------------------------
 
 fn_parse_date() {
+	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
 	date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s
 }
 
 fn_find_backups() {
-	find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune
+	find "$DEST_FOLDER" -type d -name "????-??-??-??????" -prune
 }
 
 fn_expire_backup() {
@@ -92,7 +93,6 @@ fi
 # -----------------------------------------------------------------------------
 
 export IFS=$'\n' # Better for handling spaces in filenames.
-BACKUP_FOLDER_PATTERN=????-??-??-??????
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
