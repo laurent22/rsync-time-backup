@@ -40,9 +40,9 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 # TODO
 
-* Check if there's enough space in the destination before doing the backup. Also automatically delete old backups.
-
 * Manage the backups in a way similar to Time Machine - hourly backups for the past 24 hours; daily backups for the past month; weekly backups for the previous months.
+
+* Other minor changes (see TODO comments in the source).
 
 # LICENSE
 
