@@ -41,7 +41,7 @@ fn_find_backups() {
 
 fn_expire_backup() {
 	fn_log_info "Expiring $1"
-	echo rm -rf -- "$1"
+	rm -rf -- "$1"
 }
 
 # -----------------------------------------------------------------------------
