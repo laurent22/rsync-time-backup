@@ -161,11 +161,11 @@ while [ "1" ]; do
 
 		elif [ $stamp -ge $KEEP_DAILIES_DATE ]; then
 			# Delete all but the most recent of each day.
-			[ ${date:8:2} -eq ${prev:8:2} ] && echo rm -rf $DEST_FOLDER/$date
+			[ ${date:8:2} -eq ${prev:8:2} ] && echo rm -rf -- "$DEST_FOLDER/$date"
 
 		else
 			# Delete all but the most recent of each month.
-			[ ${date:5:2} -eq ${prev:5:2} ] && echo rm -rf $DEST_FOLDER/$date
+			[ ${date:5:2} -eq ${prev:5:2} ] && echo rm -rf -- "$DEST_FOLDER/$date"
 		fi
 
 		prev=$date
