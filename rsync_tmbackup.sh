@@ -226,7 +226,8 @@ while [ "1" ]; do
 	fi
 
 	if [ "$RSYNC_EXIT_CODE" != "0" ]; then
-		ln -s $DEST $DEST/../latest
+		rm -f $DEST_FOLDER/latest
+		ln -s $DEST $DEST_FOLDER/latest
 		fn_log_error "Exited with error code $RSYNC_EXIT_CODE"
 		exit $RSYNC_EXIT_CODE
 	fi
