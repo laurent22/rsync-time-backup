@@ -28,12 +28,25 @@ fn_terminate_script() {
 trap 'fn_terminate_script' SIGINT
 
 # -----------------------------------------------------------------------------
-# Source and destination information
+# Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 
 fn_parse_date() {
 	date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s
 }
+
+fn_find_backups() {
+	find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune
+}
+
+fn_expire_backup() {
+	fn_log_info "Expiring $1"
+	echo rm -rf -- "$1"
+}
+
+# -----------------------------------------------------------------------------
+# Source and destination information
+# -----------------------------------------------------------------------------
 
 SRC_FOLDER=${1%/}
 DEST_FOLDER=${2%/}
@@ -78,10 +91,6 @@ fi
 # Setup additional variables
 # -----------------------------------------------------------------------------
 
-fn_find_backups() {
-    find "$DEST_FOLDER" -type d -name "$BACKUP_FOLDER_PATTERN" -prune
-}
-
 export IFS=$'\n' # Better for handling spaces in filenames.
 BACKUP_FOLDER_PATTERN=????-??-??-??????
 NOW=$(date +"%Y-%m-%d-%H%M%S")
@@ -121,11 +130,6 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		fi
 	fi
 fi
-
-fn_expire_backup() {
-    fn_log_info "Expiring $1"
-    echo rm -rf -- "$1"
-}
 
 # Run in a loop to handle the "No space left on device" logic.
 while [ "1" ]; do
