@@ -31,6 +31,10 @@ trap 'fn_terminate_script' SIGINT
 # Source and destination information
 # -----------------------------------------------------------------------------
 
+fn_parse_date() {
+	date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s
+}
+
 SRC_FOLDER=${1%/}
 DEST_FOLDER=${2%/}
 EXCLUSION_FILE=$3
@@ -82,6 +86,8 @@ DEST=$DEST_FOLDER/$NOW
 LAST_TIME=$(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | tail -n 1)
 PREVIOUS_DEST=$DEST_FOLDER/$LAST_TIME
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
+KEEP_ALL_DATE=$(date -d '-1 day' +%s)
+KEEP_DAILIES_DATE=$(date -d '-1 month' +%s)
 
 # -----------------------------------------------------------------------------
 # Create profile folder if it doesn't exist
@@ -139,6 +145,32 @@ while [ "1" ]; do
 		fn_log_info "Creating destination $DEST"
 		mkdir -p -- "$DEST"
 	fi
+
+	# -----------------------------------------------------------------------------
+	# Purge certain old backups before beginning new backup.
+	# -----------------------------------------------------------------------------
+
+	for date in $(ls -1 -- "$DEST_FOLDER" | grep "$BACKUP_FOLDER_PATTERN" | sort -r); do
+		stamp=$(fn_parse_date $date)
+
+		# Skip if failed to parse date...
+		[ -n "$stamp" ] || continue
+
+		if   [ $stamp -ge $KEEP_ALL_DATE ]; then
+			true
+
+		elif [ $stamp -ge $KEEP_DAILIES_DATE ]; then
+			# Delete all but the most recent of each day.
+			[ ${date:8:2} -eq ${prev:8:2} ] && echo rm -rf $DEST_FOLDER/$date
+
+		else
+			# Delete all but the most recent of each month.
+			[ ${date:5:2} -eq ${prev:5:2} ] && echo rm -rf $DEST_FOLDER/$date
+		fi
+
+		prev=$date
+	done
+
 
 	# -----------------------------------------------------------------------------
 	# Start backup

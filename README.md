@@ -42,8 +42,6 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Check if there's enough space in the destination before doing the backup. Also automatically delete old backups.
 
-* Manage the backups in a way similar to Time Machine - hourly backups for the past 24 hours; daily backups for the past month; weekly backups for the previous months.
-
 # LICENSE
 
 [MIT](http://opensource.org/licenses/MIT)
