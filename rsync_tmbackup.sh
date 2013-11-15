@@ -97,24 +97,19 @@ fi
 # Setup additional variables
 # -----------------------------------------------------------------------------
 
-export IFS=$'\n' # Better for handling spaces in filenames.
+# Date logic
 NOW=$(date +"%Y-%m-%d-%H%M%S")
+EPOCH=$(date "+%s")
+KEEP_ALL_DATE=$(($EPOCH - 86400))       # 1 day ago
+KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
+
+
+export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST=$DEST_FOLDER/$NOW
 PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
-
-case "$OSTYPE" in
-	linux*)
-		KEEP_ALL_DATE=$(date -d '-1 day' +%s)
-		KEEP_DAILIES_DATE=$(date -d '-1 month' +%s)
-		;;
-	darwin*)
-		KEEP_ALL_DATE=$(date -j -f "%a %b %d %T %Z %Y" "`date -v -1d`" "+%s")
-		KEEP_DAILIES_DATE=$(date -j -f "%a %b %d %T %Z %Y" "`date -v -1m`" "+%s")
-		;;
-esac
 
 # -----------------------------------------------------------------------------
 # Create profile folder if it doesn't exist
