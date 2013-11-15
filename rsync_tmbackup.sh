@@ -190,11 +190,11 @@ while [ "1" ]; do
 
 		elif [ $stamp -ge $KEEP_DAILIES_DATE ]; then
 			# Delete all but the most recent of each day.
-			[ ${date:8:2} -eq ${prev:8:2} ] && fn_expire_backup "$fname"
+			[ "${date:0:10}" == "${prev:0:10}" ] && fn_expire_backup "$fname"
 
 		else
 			# Delete all but the most recent of each month.
-			[ ${date:5:2} -eq ${prev:5:2} ] && fn_expire_backup "$fname"
+			[ "${date:0:7}" == "${prev:0:7}" ] && fn_expire_backup "$fname"
 		fi
 
 		prev=$date
