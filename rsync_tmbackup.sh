@@ -41,6 +41,13 @@ fn_find_backups() {
 }
 
 fn_expire_backup() {
+	# Double-check that we're on a backup destination to be completely
+	# sure we're deleting the right folder
+	if [ "$(fn_is_backup_destination $(dirname -- "$1"))" != "1" ]; then
+		fn_log_error "$1 is not on a backup destination - aborting."
+		exit 1
+	fi
+
 	fn_log_info "Expiring $1"
 	rm -rf -- "$1"
 }
@@ -255,13 +262,6 @@ while [ "1" ]; do
 		OLD_BACKUP_PATH=$(fn_find_backups | head -n 1)
 		if [ "$OLD_BACKUP_PATH" == "" ]; then
 			fn_log_error "No space left on device, and cannot get path to oldest backup to delete."
-			exit 1
-		fi
-
-		# Double-check that we're on a backup destination to be completely sure we're deleting the right folder
-		OLD_BACKUP_PARENT_PATH=$(dirname -- "$OLD_BACKUP_PATH")
-		if [ "$(fn_is_backup_destination $OLD_BACKUP_PARENT_PATH)" != "1" ]; then
-			fn_log_error "'$OLD_BACKUP_PATH' is not on a backup destination - aborting."
 			exit 1
 		fi
 
