@@ -279,6 +279,10 @@ while [ "1" ]; do
 		exit $RSYNC_EXIT_CODE
 	fi
 
+	# Force creation of 'latest' symlink pointing at the new $DEST.
+	rm -rf -- "$DEST_FOLDER/latest"
+	ln -vs "$(basename "$DEST")" "$DEST_FOLDER/latest"
+
 	rm -- "$INPROGRESS_FILE"
 	# TODO: grep for "^rsync error:.*$" in log
 	fn_log_info "Backup completed without errors."
