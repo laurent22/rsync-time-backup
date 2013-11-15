@@ -33,7 +33,10 @@ trap 'fn_terminate_script' SIGINT
 
 fn_parse_date() {
 	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
-	date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s
+	case "$OSTYPE" in
+		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
+		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+	esac
 }
 
 fn_find_backups() {
@@ -49,7 +52,7 @@ fn_expire_backup() {
 	fi
 
 	fn_log_info "Expiring $1"
-	rm -rf -- "$1"
+	echo "rm -rf -- $1"
 }
 
 # -----------------------------------------------------------------------------
@@ -101,8 +104,17 @@ LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST=$DEST_FOLDER/$NOW
 PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
-KEEP_ALL_DATE=$(date -d '-1 day' +%s)
-KEEP_DAILIES_DATE=$(date -d '-1 month' +%s)
+
+case "$OSTYPE" in
+	linux*)
+		KEEP_ALL_DATE=$(date -d '-1 day' +%s)
+		KEEP_DAILIES_DATE=$(date -d '-1 month' +%s)
+		;;
+	darwin*)
+		KEEP_ALL_DATE=$(date -j -f "%a %b %d %T %Z %Y" "`date -v -1d`" "+%s")
+		KEEP_DAILIES_DATE=$(date -j -f "%a %b %d %T %Z %Y" "`date -v -1m`" "+%s")
+		;;
+esac
 
 # -----------------------------------------------------------------------------
 # Create profile folder if it doesn't exist
@@ -171,23 +183,30 @@ while [ "1" ]; do
 		stamp=$(fn_parse_date $date)
 
 		# Skip if failed to parse date...
+		# TODO: display warning
 		[ -n "$stamp" ] || continue
 
 		if   [ $stamp -ge $KEEP_ALL_DATE ]; then
+			
 			true
 
 		elif [ $stamp -ge $KEEP_DAILIES_DATE ]; then
+			
 			# Delete all but the most recent of each day.
-			[ ${date:8:2} -eq ${prev:8:2} ] && fn_expire_backup "$fname"
+			if [ ${date:0:7} == ${prev:0:7} ]; then
+				[ ${date:8:2} -eq ${prev:8:2} ] && fn_expire_backup "$fname"
+			fi
 
 		else
+			
 			# Delete all but the most recent of each month.
-			[ ${date:5:2} -eq ${prev:5:2} ] && fn_expire_backup "$fname"
+			if [ ${date:0:4} == ${prev:0:4} ]; then
+				[ ${date:5:2} -eq ${prev:5:2} ] && fn_expire_backup "$fname"
+			fi
 		fi
 
 		prev=$date
 	done
-
 
 	# -----------------------------------------------------------------------------
 	# Start backup
