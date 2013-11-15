@@ -164,7 +164,7 @@ while [ "1" ]; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-    # Default value for $prev ensures that the most recent backup is never deleted.
+	# Default value for $prev ensures that the most recent backup is never deleted.
 	prev="0000-00-00-000000"
 	for fname in $(fn_find_backups | sort -r); do
 		date=$(basename "$fname")
