@@ -43,7 +43,7 @@ fn_find_backups() {
 fn_expire_backup() {
 	# Double-check that we're on a backup destination to be completely
 	# sure we're deleting the right folder
-	if [ "$(fn_is_backup_destination $(dirname -- "$1"))" != "1" ]; then
+	if [ -z "$(fn_is_backup_destination "$(dirname -- "$1")")" ]; then
 		fn_log_error "$1 is not on a backup destination - aborting."
 		exit 1
 	fi
@@ -78,15 +78,10 @@ fn_backup_marker_path() {
 }
 
 fn_is_backup_destination() {
-	DEST_MARKER_FILE="$(fn_backup_marker_path $1)"
-	if [ -f "$DEST_MARKER_FILE" ]; then
-		echo "1"
-	else
-		echo "0"
-	fi
+	find "$(fn_backup_marker_path "$1")" 2>/dev/null
 }
 
-if [ "$(fn_is_backup_destination $DEST_FOLDER)" != "1" ]; then
+if [ -z "$(fn_is_backup_destination $DEST_FOLDER)" ]; then
 	fn_log_info "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
 	fn_log_info "If it is indeed a backup folder, you may add the marker file by running the following command:"
 	fn_log_info ""
