@@ -36,7 +36,9 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Exclude file - support for pattern-based exclusion via the `--exclude-from` rsync parameter.
 
-* The application is one bash script that can be easily edited.
+* "latest" symlink that points to the latest successful backup.
+
+* The application is just one bash script that can be easily edited.
 
 # TODO
 
