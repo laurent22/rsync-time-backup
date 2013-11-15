@@ -33,7 +33,10 @@ trap 'fn_terminate_script' SIGINT
 
 fn_parse_date() {
 	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
-	date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s
+	case "$OSTYPE" in
+		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
+		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+	esac
 }
 
 fn_find_backups() {
@@ -101,8 +104,17 @@ LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST=$DEST_FOLDER/$NOW
 PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
-KEEP_ALL_DATE=$(date -d '-1 day' +%s)
-KEEP_DAILIES_DATE=$(date -d '-1 month' +%s)
+
+case "$OSTYPE" in
+	linux*)
+		KEEP_ALL_DATE=$(date -d '-1 day' +%s)
+		KEEP_DAILIES_DATE=$(date -d '-1 month' +%s)
+		;;
+	darwin*)
+		KEEP_ALL_DATE=$(date -j -f "%a %b %d %T %Z %Y" "`date -v -1d`" "+%s")
+		KEEP_DAILIES_DATE=$(date -j -f "%a %b %d %T %Z %Y" "`date -v -1m`" "+%s")
+		;;
+esac
 
 # -----------------------------------------------------------------------------
 # Create profile folder if it doesn't exist
@@ -187,7 +199,6 @@ while [ "1" ]; do
 
 		prev=$date
 	done
-
 
 	# -----------------------------------------------------------------------------
 	# Start backup
