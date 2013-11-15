@@ -226,11 +226,18 @@ while [ "1" ]; do
 	fi
 
 	if [ "$RSYNC_EXIT_CODE" != "0" ]; then
-		rm -f $DEST_FOLDER/latest
-		ln -s $DEST $DEST_FOLDER/latest
 		fn_log_error "Exited with error code $RSYNC_EXIT_CODE"
 		exit $RSYNC_EXIT_CODE
 	fi
+	
+	# -----------------------------------------------------------------------------
+	# Add symlink to last successful backup
+	# -----------------------------------------------------------------------------
+	
+	cd "$DEST_FOLDER"
+	rm -f -- "latest"
+	ln -s -- $(basename -- "$DEST") "latest"
+	cd -
 	
 	rm -- "$INPROGRESS_FILE"
 	# TODO: grep for "^rsync error:.*$" in log
