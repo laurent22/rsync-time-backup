@@ -36,6 +36,8 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Exclude file - support for pattern-based exclusion via the `--exclude-from` rsync parameter.
 
+* Automatically purge old backups - within 24 hours, all backups are kept. Within one month, the most recent backup for each day is kept. For all previous backups, the most recent of each month is kept.
+
 * "latest" symlink that points to the latest successful backup.
 
 * The application is just one bash script that can be easily edited.
@@ -43,6 +45,8 @@ An optional exclude file can be provided as a third parameter. It should be comp
 # TODO
 
 * Minor changes (see TODO comments in the source).
+
+* Backup to remote drive?
 
 # LICENSE
 
