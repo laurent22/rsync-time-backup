@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-APPNAME=$(basename $0| sed "s/\.sh//")
+APPNAME=$(basename $0 | sed "s/\.sh//")
 
 # -----------------------------------------------------------------------------
 # Log functions
@@ -109,7 +109,7 @@ INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
 # -----------------------------------------------------------------------------
 
 if [ -f "$INPROGRESS_FILE" ]; then
-	if [ "$PREVIOUS_DEST" != "" ]; then
+	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
