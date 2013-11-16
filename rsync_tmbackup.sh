@@ -11,7 +11,7 @@ fn_log_error() { echo "$APPNAME: [ERROR] $1"; }
 ######## Make sure everything really stops when CTRL+C is pressed #############
 
 fn_terminate_script() {
-	echo "$APPNAME: SIGINT caught."
+	fn_log_info "SIGINT caught."
 	exit 1
 }
 
