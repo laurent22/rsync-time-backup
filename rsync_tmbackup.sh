@@ -249,7 +249,7 @@ while [ "1" ]; do
 	# Add symlink to last successful backup
 	# -----------------------------------------------------------------------------
 
-	rm -f -- "latest"
+	rm -rf -- "$DEST_FOLDER/latest"
 	ln -vs -- "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
 	rm -- "$INPROGRESS_FILE"
