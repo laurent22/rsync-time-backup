@@ -139,9 +139,6 @@ while [ "1" ]; do
 	if [ "$PREVIOUS_DEST" == "" ]; then
 		fn_log_info "No previous backup - creating new one."
 	else
-		# If the path is relative, it needs to be relative to the destination. To keep
-		# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
-		PREVIOUS_DEST="$(cd "$PREVIOUS_DEST"; pwd)"
 		fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
 		LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
 	fi
