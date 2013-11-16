@@ -71,6 +71,10 @@ for arg in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
 	fi
 done
 
+if [ -n "$EXCLUSION_FILE" ]; then
+	EXCLUDES_OPTION="--exclude-from '$EXCLUSION_FILE'"
+fi
+
 # -----------------------------------------------------------------------------
 # Check that the destination drive is a backup drive
 # -----------------------------------------------------------------------------
@@ -108,9 +112,9 @@ KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
 export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
-DEST=$DEST_FOLDER/$NOW
-PREVIOUS_DEST=$(fn_find_backups | head -n 1)
-INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
+DEST="$DEST_FOLDER/$NOW"
+PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
+INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
 
 mkdir -pv -- "$PROFILE_FOLDER"
 
@@ -128,20 +132,37 @@ if [ -f "$INPROGRESS_FILE" ]; then
 	fi
 fi
 
+# -----------------------------------------------------------------------------
+# Check if we are doing an incremental backup (if previous backup exists) or not
+# -----------------------------------------------------------------------------
+
+if [ "$PREVIOUS_DEST" == "" ]; then
+	fn_log_info "No previous backup - creating new one."
+else
+	fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
+	LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
+fi
+
+CMD="rsync \
+--compress \
+--numeric-ids \
+--links \
+--hard-links \
+--delete \
+--delete-excluded \
+--one-file-system \
+--archive \
+--itemize-changes \
+--verbose \
+--log-file '$LOG_FILE' \
+$EXCLUDES_OPTION \
+$LINK_DEST_OPTION \
+-- '$SRC_FOLDER/' '$DEST/' \
+| grep -E '^deleting|[^/]$'"
+
+
 # Run in a loop to handle the "No space left on device" logic.
 while [ "1" ]; do
-
-	# -----------------------------------------------------------------------------
-	# Check if we are doing an incremental backup (if previous backup exists) or not
-	# -----------------------------------------------------------------------------
-
-	LINK_DEST_OPTION=""
-	if [ "$PREVIOUS_DEST" == "" ]; then
-		fn_log_info "No previous backup - creating new one."
-	else
-		fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
-		LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
-	fi
 
 	# -----------------------------------------------------------------------------
 	# Create destination folder if it doesn't already exists
@@ -184,26 +205,6 @@ while [ "1" ]; do
 	fn_log_info "Starting backup..."
 	fn_log_info "From: $SRC_FOLDER"
 	fn_log_info "To:   $DEST"
-
-	CMD="rsync"
-	CMD="$CMD --compress"
-	CMD="$CMD --numeric-ids"
-	CMD="$CMD --links"
-	CMD="$CMD --hard-links"
-	CMD="$CMD --delete"
-	CMD="$CMD --delete-excluded"
-	CMD="$CMD --one-file-system"
-	CMD="$CMD --archive"
-	CMD="$CMD --itemize-changes"
-	CMD="$CMD --verbose"
-	CMD="$CMD --log-file '$LOG_FILE'"
-	if [ "$EXCLUSION_FILE" != "" ]; then
-		# We've already checked that $EXCLUSION_FILE doesn't contain a single quote
-		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
-	fi
-	CMD="$CMD $LINK_DEST_OPTION"
-	CMD="$CMD -- '$SRC_FOLDER/' '$DEST/'"
-	CMD="$CMD | grep -E '^deleting|[^/]$'"
 
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
