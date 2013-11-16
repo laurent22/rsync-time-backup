@@ -58,8 +58,8 @@ SRC_FOLDER=${1%/}
 DEST_FOLDER=${2%/}
 EXCLUSION_FILE=$3
 
-for arg in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
-	if [[ "$arg" == *"'"* ]]; then
+for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
+	if [[ "$ARG" == *"'"* ]]; then
 		fn_log_error 'Arguments may not have any single quote characters.'
 		exit 1
 	fi
@@ -97,7 +97,6 @@ EPOCH=$(date "+%s")
 KEEP_ALL_DATE=$(($EPOCH - 86400))       # 1 day ago
 KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
 
-
 export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.$APPNAME"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
@@ -129,11 +128,11 @@ mkdir -pv -- "$DEST" "$PROFILE_FOLDER"
 # Check if we are doing an incremental backup (if previous backup exists) or not
 # -----------------------------------------------------------------------------
 
-if [ "$PREVIOUS_DEST" == "" ]; then
+if [ -z "$PREVIOUS_DEST" ]; then
 	fn_log_info "No previous backup - creating new one."
 else
 	fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
-	LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
+	LINK_DEST_OPTION="--link-dest='$PREVIOUS_DEST'"
 fi
 
 CMD="rsync \
@@ -161,28 +160,29 @@ while [ "1" ]; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-	# Default value for $prev ensures that the most recent backup is never deleted.
-	prev="0000-00-00-000000"
-	for fname in $(fn_find_backups); do
-		date=$(basename "$fname")
-		stamp=$(fn_parse_date $date)
+	# Default value for $PREV ensures that the most recent backup is never deleted.
+	PREV="0000-00-00-000000"
+	for FILENAME in $(fn_find_backups); do
+		BACKUP_DATE=$(basename "$FILENAME")
+		TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
 
 		# Skip if failed to parse date...
-		[ -n "$stamp" ] || continue
-
-		if   [ $stamp -ge $KEEP_ALL_DATE ]; then
-			true
-
-		elif [ $stamp -ge $KEEP_DAILIES_DATE ]; then
-			# Delete all but the most recent of each day.
-			[ "${date:0:10}" == "${prev:0:10}" ] && fn_expire_backup "$fname"
-
-		else
-			# Delete all but the most recent of each month.
-			[ "${date:0:7}" == "${prev:0:7}" ] && fn_expire_backup "$fname"
+		if [ -z "$TIMESTAMP" ]; then
+			fn_log_warn "Could not parse date: $FILENAME"
+			continue
 		fi
 
-		prev=$date
+		if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
+			true
+		elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
+			# Delete all but the most recent of each day.
+			[ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
+		else
+			# Delete all but the most recent of each month.
+			[ "${BACKUP_DATE:0:7}" == "${PREV:0:7}" ] && fn_expire_backup "$FILENAME"
+		fi
+
+		PREV=$BACKUP_DATE
 	done
 
 	# -----------------------------------------------------------------------------
@@ -210,15 +210,9 @@ while [ "1" ]; do
 	rm -- "$LOG_FILE"
 
 	if [ -n "$NO_SPACE_LEFT" ]; then
-		# TODO: -y flag
-		read -p "It looks like there is no space left on the destination. Delete old backup? (Y/n) " yn
-		case $yn in
-			[Nn]* ) exit 0;;
-		esac
-
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
 
-		if [ "$(fn_find_backups | wc -l)" -lt "2" ]; then
+		if [[ "$(fn_find_backups | wc -l)" -lt "2" ]]; then
 			fn_log_error "No space left on device, and no old backup to delete."
 			exit 1
 		fi
