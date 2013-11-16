@@ -223,13 +223,7 @@ while [ "1" ]; do
 			exit 1
 		fi
 
-		OLD_BACKUP_PATH=$(fn_find_backups | tail -n 1)
-		if [ -z "$OLD_BACKUP_PATH" ]; then
-			fn_log_error "No space left on device, and cannot get path to oldest backup to delete."
-			exit 1
-		fi
-
-		fn_expire_backup "$OLD_BACKUP_PATH"
+		fn_expire_backup "$(fn_find_backups | tail -n 1)"
 
 		# Resume backup
 		continue
