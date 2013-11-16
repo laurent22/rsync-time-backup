@@ -264,10 +264,8 @@ while [ "1" ]; do
 	# Add symlink to last successful backup
 	# -----------------------------------------------------------------------------
 
-	cd "$DEST_FOLDER"
 	rm -f -- "latest"
-	ln -s -- $(basename -- "$DEST") "latest"
-	cd -
+	ln -vs -- $(basename -- "$DEST") "$DEST_FOLDER/latest"
 
 	rm -- "$INPROGRESS_FILE"
 	# TODO: grep for "^rsync error:.*$" in log
