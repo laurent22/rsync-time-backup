@@ -123,10 +123,10 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(fn_find_backups | head -n 2 | wc -l)
+		LINE_COUNT=$(fn_find_backups | wc -l)
 		mv -- "$PREVIOUS_DEST" "$DEST"
 		if [ "$LINE_COUNT" -gt 1 ]; then
-			PREVIOUS_PREVIOUS_DEST=$(fn_find_backups | head -n 2 | tail -n 1)
+			PREVIOUS_PREVIOUS_DEST=$(fn_find_backups | sed -n '2p')
 			PREVIOUS_DEST=$PREVIOUS_PREVIOUS_DEST
 		else
 			PREVIOUS_DEST=""
