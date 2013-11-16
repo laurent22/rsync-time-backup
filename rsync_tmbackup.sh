@@ -279,6 +279,15 @@ while [ "1" ]; do
 		exit $RSYNC_EXIT_CODE
 	fi
 
+	# -----------------------------------------------------------------------------
+	# Add symlink to last successful backup
+	# -----------------------------------------------------------------------------
+
+	cd "$DEST_FOLDER"
+	rm -f -- "latest"
+	ln -s -- $(basename -- "$DEST") "latest"
+	cd -
+
 	rm -- "$INPROGRESS_FILE"
 	# TODO: grep for "^rsync error:.*$" in log
 	fn_log_info "Backup completed without errors."
