@@ -68,11 +68,11 @@ fi
 fn_backup_marker_path() { echo "$1/backup.marker"; }
 fn_find_backup_marker() { find "$(fn_backup_marker_path "$1")" 2>/dev/null; }
 
-if [ -z "$(fn_find_backup_marker $DEST_FOLDER)" ]; then
+if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
 	fn_log_info "Destination does not appear to be a backup folder or drive (marker file not found)."
 	fn_log_info "If you wish to make your backups here, please run this command:"
 	fn_log_info ""
-	fn_log_info "touch \"$(fn_backup_marker_path $DEST_FOLDER)\""
+	fn_log_info "touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
 	exit 1
 fi
 
