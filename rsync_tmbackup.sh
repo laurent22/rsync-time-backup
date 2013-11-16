@@ -40,7 +40,8 @@ fn_parse_date() {
 }
 
 fn_find_backups() {
-	find "$DEST_FOLDER" -type d -name "????-??-??-??????" -prune
+	# List backups newest first.
+	find "$DEST_FOLDER" -type d -name "????-??-??-??????" -prune | sort -r
 }
 
 fn_expire_backup() {
@@ -108,7 +109,7 @@ export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
 LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST=$DEST_FOLDER/$NOW
-PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 1)
+PREVIOUS_DEST=$(fn_find_backups | head -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 
 mkdir -pv -- "$PROFILE_FOLDER"
@@ -122,10 +123,10 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(fn_find_backups | sort | tail -n 2 | wc -l)
+		LINE_COUNT=$(fn_find_backups | head -n 2 | wc -l)
 		mv -- "$PREVIOUS_DEST" "$DEST"
 		if [ "$LINE_COUNT" -gt 1 ]; then
-			PREVIOUS_PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 2 | head -n 1)
+			PREVIOUS_PREVIOUS_DEST=$(fn_find_backups | head -n 2 | tail -n 1)
 			PREVIOUS_DEST=$PREVIOUS_PREVIOUS_DEST
 		else
 			PREVIOUS_DEST=""
@@ -166,7 +167,7 @@ while [ "1" ]; do
 
 	# Default value for $prev ensures that the most recent backup is never deleted.
 	prev="0000-00-00-000000"
-	for fname in $(fn_find_backups | sort -r); do
+	for fname in $(fn_find_backups); do
 		date=$(basename "$fname")
 		stamp=$(fn_parse_date $date)
 
@@ -255,7 +256,7 @@ while [ "1" ]; do
 			exit 1
 		fi
 
-		OLD_BACKUP_PATH=$(fn_find_backups | head -n 1)
+		OLD_BACKUP_PATH=$(fn_find_backups | tail -n 1)
 		if [ "$OLD_BACKUP_PATH" == "" ]; then
 			fn_log_error "No space left on device, and cannot get path to oldest backup to delete."
 			exit 1
