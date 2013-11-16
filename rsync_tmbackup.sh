@@ -98,8 +98,6 @@ KEEP_ALL_DATE=$(($EPOCH - 86400))       # 1 day ago
 KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
-PROFILE_FOLDER="$HOME/.$APPNAME"
-LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST="$DEST_FOLDER/$NOW"
 PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
 INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
@@ -122,7 +120,7 @@ fi
 # Make directories if they haven't been already.
 # -----------------------------------------------------------------------------
 
-mkdir -pv -- "$DEST" "$PROFILE_FOLDER"
+mkdir -pv -- "$DEST"
 
 # -----------------------------------------------------------------------------
 # Check if we are doing an incremental backup (if previous backup exists) or not
@@ -146,7 +144,7 @@ CMD="rsync \
 --archive \
 --itemize-changes \
 --verbose \
---log-file '$LOG_FILE' \
+--log-file '$INPROGRESS_FILE' \
 $EXCLUDES_OPTION \
 $LINK_DEST_OPTION \
 -- '$SRC_FOLDER/' '$DEST/' \
@@ -193,7 +191,6 @@ while : ; do
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
 
-	touch -- "$INPROGRESS_FILE"
 	eval $CMD
 	RSYNC_EXIT_CODE=$?
 
@@ -202,9 +199,7 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 	# TODO: find better way to check for out of space condition without parsing log.
-	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
-
-	rm -- "$LOG_FILE"
+	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$INPROGRESS_FILE")"
 
 	if [ -n "$NO_SPACE_LEFT" ]; then
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
