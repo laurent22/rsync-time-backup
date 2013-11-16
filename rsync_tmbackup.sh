@@ -124,11 +124,7 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
 		mv -- "$PREVIOUS_DEST" "$DEST"
-		if [ "$(fn_find_backups | wc -l)" -gt 1 ]; then
-			PREVIOUS_DEST=$(fn_find_backups | sed -n '2p')
-		else
-			PREVIOUS_DEST=""
-		fi
+		PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
 	fi
 fi
 
