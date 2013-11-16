@@ -181,8 +181,6 @@ while [ "1" ]; do
 	# Start backup
 	# -----------------------------------------------------------------------------
 
-	LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
-
 	fn_log_info "Starting backup..."
 	fn_log_info "From: $SRC_FOLDER"
 	fn_log_info "To:   $DEST"
