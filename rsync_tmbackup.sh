@@ -69,11 +69,10 @@ fn_backup_marker_path() { echo "$1/backup.marker"; }
 fn_find_backup_marker() { find "$(fn_backup_marker_path "$1")" 2>/dev/null; }
 
 if [ -z "$(fn_find_backup_marker $DEST_FOLDER)" ]; then
-	fn_log_info "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
-	fn_log_info "If it is indeed a backup folder, you may add the marker file by running the following command:"
+	fn_log_info "Destination does not appear to be a backup folder or drive (marker file not found)."
+	fn_log_info "If you wish to make your backups here, please run this command:"
 	fn_log_info ""
 	fn_log_info "touch \"$(fn_backup_marker_path $DEST_FOLDER)\""
-	fn_log_info ""
 	exit 1
 fi
 
@@ -96,7 +95,7 @@ if [ -f "$INPROGRESS_FILE" ]; then
 	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
-		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
+		fn_log_info "Previous backup failed or was interrupted. Resuming..."
 		mv -- "$PREVIOUS_DEST" "$DEST"
 		PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
 	fi
