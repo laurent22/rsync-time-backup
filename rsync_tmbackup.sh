@@ -154,7 +154,7 @@ $LINK_DEST_OPTION \
 
 
 # Run in a loop to handle the "No space left on device" logic.
-while [ "1" ]; do
+while : ; do
 
 	# -----------------------------------------------------------------------------
 	# Purge certain old backups before beginning new backup.
@@ -173,7 +173,7 @@ while [ "1" ]; do
 		fi
 
 		if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
-			true
+			: # Don't expire any backups in this range.
 		elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
 			# Delete all but the most recent of each day.
 			[ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
