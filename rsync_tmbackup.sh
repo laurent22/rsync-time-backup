@@ -150,10 +150,7 @@ while [ "1" ]; do
 	# Create destination folder if it doesn't already exists
 	# -----------------------------------------------------------------------------
 
-	if [ ! -d "$DEST" ]; then
-		fn_log_info "Creating destination $DEST"
-		mkdir -p -- "$DEST"
-	fi
+	mkdir -pv -- "$DEST"
 
 	# -----------------------------------------------------------------------------
 	# Purge certain old backups before beginning new backup.
