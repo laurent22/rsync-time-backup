@@ -167,10 +167,7 @@ while : ; do
 		TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
 
 		# Skip if failed to parse date...
-		if [ -z "$TIMESTAMP" ]; then
-			fn_log_warn "Could not parse date: $FILENAME"
-			continue
-		fi
+		[ -z "$TIMESTAMP" ] && continue
 
 		if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
 			: # Don't expire any backups in this range.
