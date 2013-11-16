@@ -2,17 +2,13 @@
 
 APPNAME=$(basename $0 | sed "s/\.sh//")
 
-# -----------------------------------------------------------------------------
-# Log functions
-# -----------------------------------------------------------------------------
+############################# Log functions ###################################
 
 fn_log_info()  { echo "$APPNAME: $1"; }
 fn_log_warn()  { echo "$APPNAME: [WARNING] $1"; }
 fn_log_error() { echo "$APPNAME: [ERROR] $1"; }
 
-# -----------------------------------------------------------------------------
-# Make sure everything really stops when CTRL+C is pressed
-# -----------------------------------------------------------------------------
+######## Make sure everything really stops when CTRL+C is pressed #############
 
 fn_terminate_script() {
 	echo "$APPNAME: SIGINT caught."
@@ -21,9 +17,7 @@ fn_terminate_script() {
 
 trap 'fn_terminate_script' SIGINT
 
-# -----------------------------------------------------------------------------
-# Small utility functions for reducing code duplication
-# -----------------------------------------------------------------------------
+######### Small utility functions for reducing code duplication ###############
 
 fn_parse_date() {
 	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
@@ -50,9 +44,7 @@ fn_expire_backup() {
 	rm -rf -- "$1"
 }
 
-# -----------------------------------------------------------------------------
-# Source and destination information
-# -----------------------------------------------------------------------------
+################### Source and destination information ########################
 
 SRC_FOLDER=${1%/}
 DEST_FOLDER=${2%/}
@@ -69,9 +61,7 @@ if [ -n "$EXCLUSION_FILE" ]; then
 	EXCLUDES_OPTION="--exclude-from '$EXCLUSION_FILE'"
 fi
 
-# -----------------------------------------------------------------------------
-# Check that the destination drive is a backup drive
-# -----------------------------------------------------------------------------
+########### Check that the destination drive is a backup drive ################
 
 # TODO: check that the destination supports hard links
 
@@ -87,9 +77,7 @@ if [ -z "$(fn_find_backup_marker $DEST_FOLDER)" ]; then
 	exit 1
 fi
 
-# -----------------------------------------------------------------------------
-# Setup additional variables
-# -----------------------------------------------------------------------------
+####################### Setup additional variables ############################
 
 # Date logic
 NOW=$(date +"%Y-%m-%d-%H%M%S")
@@ -102,9 +90,7 @@ DEST="$DEST_FOLDER/$NOW"
 PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
 INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
 
-# -----------------------------------------------------------------------------
-# Handle case where a previous backup failed or was interrupted.
-# -----------------------------------------------------------------------------
+##### Handle case where a previous backup failed or was interrupted. ##########
 
 if [ -f "$INPROGRESS_FILE" ]; then
 	if [ -n "$PREVIOUS_DEST" ]; then
@@ -116,15 +102,11 @@ if [ -f "$INPROGRESS_FILE" ]; then
 	fi
 fi
 
-# -----------------------------------------------------------------------------
-# Make directories if they haven't been already.
-# -----------------------------------------------------------------------------
+############# Make directories if they haven't been already. ##################
 
 mkdir -pv -- "$DEST"
 
-# -----------------------------------------------------------------------------
-# Check if we are doing an incremental backup (if previous backup exists) or not
-# -----------------------------------------------------------------------------
+################# Determine if this backup is inremental ######################
 
 if [ -z "$PREVIOUS_DEST" ]; then
 	fn_log_info "No previous backup - creating new one."
@@ -151,12 +133,8 @@ $LINK_DEST_OPTION \
 | grep -E '^deleting|[^/]$'"
 
 
-# Run in a loop to handle the "No space left on device" logic.
 while : ; do
-
-	# -----------------------------------------------------------------------------
-	# Purge certain old backups before beginning new backup.
-	# -----------------------------------------------------------------------------
+######### Purge certain old backups before beginning new backup. ##############
 
 	# Default value for $PREV ensures that the most recent backup is never deleted.
 	PREV="0000-00-00-000000"
@@ -180,9 +158,7 @@ while : ; do
 		PREV=$BACKUP_DATE
 	done
 
-	# -----------------------------------------------------------------------------
-	# Start backup
-	# -----------------------------------------------------------------------------
+############################## Start backup ###################################
 
 	fn_log_info "Starting backup..."
 	fn_log_info "From: $SRC_FOLDER"
@@ -194,9 +170,7 @@ while : ; do
 	eval $CMD
 	RSYNC_EXIT_CODE=$?
 
-	# -----------------------------------------------------------------------------
-	# Check if we ran out of space
-	# -----------------------------------------------------------------------------
+###################### Check if we ran out of space ###########################
 
 	# TODO: find better way to check for out of space condition without parsing log.
 	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$INPROGRESS_FILE")"
@@ -220,9 +194,7 @@ while : ; do
 		exit $RSYNC_EXIT_CODE
 	fi
 
-	# -----------------------------------------------------------------------------
-	# Add symlink to last successful backup
-	# -----------------------------------------------------------------------------
+################# Add symlink to last successful backup #######################
 
 	rm -rf -- "$DEST_FOLDER/latest"
 	ln -vs -- "$NOW" "$DEST_FOLDER/latest"
