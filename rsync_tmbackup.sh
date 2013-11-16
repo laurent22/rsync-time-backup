@@ -111,14 +111,7 @@ DEST=$DEST_FOLDER/$NOW
 PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
 
-# -----------------------------------------------------------------------------
-# Create profile folder if it doesn't exist
-# -----------------------------------------------------------------------------
-
-if [ ! -d "$PROFILE_FOLDER" ]; then
-	fn_log_info "Creating profile folder in '$PROFILE_FOLDER'..."
-	mkdir -- "$PROFILE_FOLDER"
-fi
+mkdir -pv -- "$PROFILE_FOLDER"
 
 # -----------------------------------------------------------------------------
 # Handle case where a previous backup failed or was interrupted.
