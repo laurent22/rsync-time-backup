@@ -103,8 +103,6 @@ DEST="$DEST_FOLDER/$NOW"
 PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
 INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
 
-mkdir -pv -- "$PROFILE_FOLDER"
-
 # -----------------------------------------------------------------------------
 # Handle case where a previous backup failed or was interrupted.
 # -----------------------------------------------------------------------------
@@ -118,6 +116,12 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
 	fi
 fi
+
+# -----------------------------------------------------------------------------
+# Make directories if they haven't been already.
+# -----------------------------------------------------------------------------
+
+mkdir -pv -- "$DEST" "$PROFILE_FOLDER"
 
 # -----------------------------------------------------------------------------
 # Check if we are doing an incremental backup (if previous backup exists) or not
@@ -150,12 +154,6 @@ $LINK_DEST_OPTION \
 
 # Run in a loop to handle the "No space left on device" logic.
 while [ "1" ]; do
-
-	# -----------------------------------------------------------------------------
-	# Create destination folder if it doesn't already exists
-	# -----------------------------------------------------------------------------
-
-	mkdir -pv -- "$DEST"
 
 	# -----------------------------------------------------------------------------
 	# Purge certain old backups before beginning new backup.
