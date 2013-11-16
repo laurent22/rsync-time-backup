@@ -105,7 +105,7 @@ fi
 
 mkdir -pv -- "$DEST"
 
-################# Determine if this backup is inremental ######################
+################# Determine if this backup is incremental ######################
 
 if [ -z "$PREVIOUS_DEST" ]; then
 	fn_log_info "No previous backup - creating new one."
