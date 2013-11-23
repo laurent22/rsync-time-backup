@@ -15,6 +15,6 @@ TMBACKUP="/usr/local/bin/rsync_tmbackup.sh"
 for DEST in /media/*/*/ /run/media/*/*/; do
     [ -f "$DEST/backup.marker" ] || continue
     USERNAME=$(basename $(dirname "$DEST"))
-    EXCLUDES=$(find /home/$USERNAME/.backup.excludes 2>/dev/null)
-    bash $TMBACKUP /home/$USERNAME $DEST $EXCLUDES
+    EXCLUDES=$(find "/home/$USERNAME/.backup.excludes" 2>/dev/null)
+    bash "$TMBACKUP" "/home/$USERNAME" "$DEST" "$EXCLUDES"
 done
