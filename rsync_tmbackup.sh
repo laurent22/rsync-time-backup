@@ -280,7 +280,7 @@ while [ "1" ]; do
 	ln -s -- $(basename -- "$DEST") "latest"
 	cd -
 
-	rm -- "$INPROGRESS_FILE"
+	rm -f -- "$INPROGRESS_FILE"
 	# TODO: grep for "^rsync error:.*$" in log
 	fn_log_info "Backup completed without errors."
 	exit 0
