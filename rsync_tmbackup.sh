@@ -53,9 +53,9 @@ fn_expire_backup() {
 # Source and destination information
 # -----------------------------------------------------------------------------
 
-SRC_FOLDER=${1%/}
-DEST_FOLDER=${2%/}
-EXCLUSION_FILE=$3
+SRC_FOLDER="${1%/}"
+DEST_FOLDER="${2%/}"
+EXCLUSION_FILE="$3"
 
 for arg in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
 	if [[ "$arg" == *"'"* ]]; then
@@ -95,9 +95,9 @@ KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.$APPNAME"
-DEST=$DEST_FOLDER/$NOW
-PREVIOUS_DEST=$(fn_find_backups | head -n 1)
-INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
+DEST="$DEST_FOLDER/$NOW"
+PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
+INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
 
 # -----------------------------------------------------------------------------
 # Create profile folder if it doesn't exist
@@ -248,7 +248,7 @@ while : ; do
 			exit 1
 		fi
 
-		OLD_BACKUP_PATH=$(fn_find_backups | tail -n 1)
+		OLD_BACKUP_PATH="$(fn_find_backups | tail -n 1)"
 		if [ -z "$OLD_BACKUP_PATH" ]; then
 			fn_log_error "No space left on device, and cannot get path to oldest backup to delete."
 			exit 1
