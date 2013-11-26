@@ -1,6 +1,6 @@
 # Rsync time backup
 
-Time Machine style backup with rsync. Should work on Linux, Mac OS X and Windows with Cygwin.
+Time Machine style backup with rsync. Should work on Linux (tested on some distros), Mac OS X (fully tested) and Windows with Cygwin (not tested yet but feeback would be welcome).
 
 # Installation
 
@@ -36,11 +36,17 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Exclude file - support for pattern-based exclusion via the `--exclude-from` rsync parameter.
 
-* The application is one bash script that can be easily edited.
+* Automatically purge old backups - within 24 hours, all backups are kept. Within one month, the most recent backup for each day is kept. For all previous backups, the most recent of each month is kept.
+
+* "latest" symlink that points to the latest successful backup.
+
+* The application is just one bash script that can be easily edited.
 
 # TODO
 
 * Minor changes (see TODO comments in the source).
+
+* Backup to remote drive?
 
 # LICENSE
 
