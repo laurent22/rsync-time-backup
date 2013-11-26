@@ -106,7 +106,6 @@ KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.rsync_tmbackup"
-LOG_FILE="$PROFILE_FOLDER/$NOW.log"
 DEST=$DEST_FOLDER/$NOW
 PREVIOUS_DEST=$(fn_find_backups | head -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
