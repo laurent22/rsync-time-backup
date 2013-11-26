@@ -113,7 +113,7 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -f "$INPROGRESS_FILE" ]; then
-	if [ "$PREVIOUS_DEST" != "" ]; then
+	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
@@ -134,7 +134,7 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 	LINK_DEST_OPTION=""
-	if [ "$PREVIOUS_DEST" == "" ]; then
+	if [ -z "$PREVIOUS_DEST" ]; then
 		fn_log_info "No previous backup - creating new one."
 	else
 		# If the path is relative, it needs to be relative to the destination. To keep
@@ -203,7 +203,7 @@ while : ; do
 	CMD="$CMD --itemize-changes"
 	CMD="$CMD --verbose"
 	CMD="$CMD --log-file '$LOG_FILE'"
-	if [ "$EXCLUSION_FILE" != "" ]; then
+	if [ -n "$EXCLUSION_FILE" ]; then
 		# We've already checked that $EXCLUSION_FILE doesn't contain a single quote
 		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
 	fi
@@ -249,7 +249,7 @@ while : ; do
 		fi
 
 		OLD_BACKUP_PATH=$(fn_find_backups | tail -n 1)
-		if [ "$OLD_BACKUP_PATH" == "" ]; then
+		if [ -z "$OLD_BACKUP_PATH" ]; then
 			fn_log_error "No space left on device, and cannot get path to oldest backup to delete."
 			exit 1
 		fi
