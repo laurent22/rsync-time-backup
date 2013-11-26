@@ -127,7 +127,7 @@ if [ -f "$INPROGRESS_FILE" ]; then
 fi
 
 # Run in a loop to handle the "No space left on device" logic.
-while [ "1" ]; do
+while : ; do
 
 	# -----------------------------------------------------------------------------
 	# Check if we are doing an incremental backup (if previous backup exists) or not
@@ -167,7 +167,7 @@ while [ "1" ]; do
 		[ -n "$stamp" ] || continue
 
 		if   [ $stamp -ge $KEEP_ALL_DATE ]; then
-			true
+			: # Don't expire any backups in this range
 
 		elif [ $stamp -ge $KEEP_DAILIES_DATE ]; then
 			# Delete all but the most recent of each day.
