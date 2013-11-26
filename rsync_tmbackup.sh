@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
+APPNAME=$(basename $0 | sed "s/\.sh$//")
+
 # -----------------------------------------------------------------------------
 # Log functions
 # -----------------------------------------------------------------------------
 
-fn_log_info()  { echo "rsync_tmbackup: $1"; }
-fn_log_warn()  { echo "rsync_tmbackup: [WARNING] $1"; }
-fn_log_error() { echo "rsync_tmbackup: [ERROR] $1"; }
+fn_log_info()  { echo "$APPNAME: $1"; }
+fn_log_warn()  { echo "$APPNAME: [WARNING] $1"; }
+fn_log_error() { echo "$APPNAME: [ERROR] $1"; }
 
 # -----------------------------------------------------------------------------
 # Make sure everything really stops when CTRL+C is pressed
@@ -92,7 +94,7 @@ KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
 
 
 export IFS=$'\n' # Better for handling spaces in filenames.
-PROFILE_FOLDER="$HOME/.rsync_tmbackup"
+PROFILE_FOLDER="$HOME/.$APPNAME"
 DEST=$DEST_FOLDER/$NOW
 PREVIOUS_DEST=$(fn_find_backups | head -n 1)
 INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
