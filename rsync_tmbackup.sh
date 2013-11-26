@@ -235,32 +235,19 @@ while [ "1" ]; do
 	# -----------------------------------------------------------------------------
 
 	# TODO: find better way to check for out of space condition without parsing log.
-	grep --quiet "No space left on device (28)" "$LOG_FILE"
-	NO_SPACE_LEFT="$?"
-	if [ "$NO_SPACE_LEFT" != "0" ]; then
-		# This error might also happen if there is no space left
-		grep --quiet "Result too large (34)" "$LOG_FILE"
-		NO_SPACE_LEFT="$?"
-	fi
+	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
 
 	rm -- "$LOG_FILE"
 
-	if [ "$NO_SPACE_LEFT" == "0" ]; then
+	if [ -n "$NO_SPACE_LEFT" ]; then
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
 
-		BACKUP_FOLDER_COUNT=$(fn_find_backups | wc -l)
-		if [[ "$BACKUP_FOLDER_COUNT" -lt "2" ]]; then
+		if [[ "$(fn_find_backups | wc -l)" -lt "2" ]]; then
 			fn_log_error "No space left on device, and no old backup to delete."
 			exit 1
 		fi
 
-		OLD_BACKUP_PATH=$(fn_find_backups | head -n 1)
-		if [[ "$OLD_BACKUP_PATH" == "" ]]; then
-			fn_log_error "No space left on device, and cannot get path to oldest backup to delete."
-			exit 1
-		fi
-
-		fn_expire_backup "$OLD_BACKUP_PATH"
+		fn_expire_backup "$(fn_find_backups | tail -n 1)"
 
 		# Resume backup
 		continue
