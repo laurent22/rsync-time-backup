@@ -34,6 +34,8 @@ fn_expire_backup() {
 
 	fn_log_info "Expiring $1"
 	rm -rf -- "$1"
+
+	let COUNTER-=1 # Don't count a backup that got expired.
 }
 
 ################### Source and destination information ########################
