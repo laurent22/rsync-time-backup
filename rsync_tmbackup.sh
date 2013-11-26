@@ -4,24 +4,16 @@
 # Log functions
 # -----------------------------------------------------------------------------
 
-fn_log_info() {
-	echo "rsync_tmbackup: $1"
-}
-
-fn_log_warn() {
-	echo "rsync_tmbackup: [WARNING] $1"
-}
-
-fn_log_error() {
-	echo "rsync_tmbackup: [ERROR] $1"
-}
+fn_log_info()  { echo "rsync_tmbackup: $1"; }
+fn_log_warn()  { echo "rsync_tmbackup: [WARNING] $1"; }
+fn_log_error() { echo "rsync_tmbackup: [ERROR] $1"; }
 
 # -----------------------------------------------------------------------------
 # Make sure everything really stops when CTRL+C is pressed
 # -----------------------------------------------------------------------------
 
 fn_terminate_script() {
-	echo "rsync_tmbackup: SIGINT caught."
+	fn_log_info "SIGINT caught."
 	exit 1
 }
 
@@ -46,7 +38,7 @@ fn_find_backups() {
 fn_expire_backup() {
 	# Double-check that we're on a backup destination to be completely
 	# sure we're deleting the right folder
-	if [ -z "$(fn_is_backup_destination "$(dirname -- "$1")")" ]; then
+	if [ -z "$(fn_find_backup_marker "$(dirname -- "$1")")" ]; then
 		fn_log_error "$1 is not on a backup destination - aborting."
 		exit 1
 	fi
@@ -76,15 +68,10 @@ done
 
 # TODO: check that the destination supports hard links
 
-fn_backup_marker_path() {
-	echo "$1/backup.marker"
-}
+fn_backup_marker_path() { echo "$1/backup.marker"; }
+fn_find_backup_marker() { find "$(fn_backup_marker_path "$1")" 2>/dev/null; }
 
-fn_is_backup_destination() {
-	find "$(fn_backup_marker_path "$1")" 2>/dev/null
-}
-
-if [ -z "$(fn_is_backup_destination $DEST_FOLDER)" ]; then
+if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
 	fn_log_info "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
 	fn_log_info "If it is indeed a backup folder, you may add the marker file by running the following command:"
 	fn_log_info ""
