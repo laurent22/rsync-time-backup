@@ -262,7 +262,7 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 	rm -rf -- "$DEST_FOLDER/latest"
-	ln -vs -- "$NOW" "$DEST_FOLDER/latest"
+	ln -vs -- "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
 	rm -f -- "$INPROGRESS_FILE"
 	# TODO: grep for "^rsync error:.*$" in log
