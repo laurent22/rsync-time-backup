@@ -1,27 +1,21 @@
 #!/usr/bin/env bash
 
+APPNAME=$(basename $0 | sed "s/\.sh$//")
+
 # -----------------------------------------------------------------------------
 # Log functions
 # -----------------------------------------------------------------------------
 
-fn_log_info() {
-	echo "rsync_tmbackup: $1"
-}
-
-fn_log_warn() {
-	echo "rsync_tmbackup: [WARNING] $1"
-}
-
-fn_log_error() {
-	echo "rsync_tmbackup: [ERROR] $1"
-}
+fn_log_info()  { echo "$APPNAME: $1"; }
+fn_log_warn()  { echo "$APPNAME: [WARNING] $1"; }
+fn_log_error() { echo "$APPNAME: [ERROR] $1"; }
 
 # -----------------------------------------------------------------------------
 # Make sure everything really stops when CTRL+C is pressed
 # -----------------------------------------------------------------------------
 
 fn_terminate_script() {
-	echo "rsync_tmbackup: SIGINT caught."
+	fn_log_info "SIGINT caught."
 	exit 1
 }
 
@@ -40,13 +34,13 @@ fn_parse_date() {
 }
 
 fn_find_backups() {
-	find "$DEST_FOLDER" -type d -name "????-??-??-??????" -prune
+	find "$DEST_FOLDER" -type d -name "????-??-??-??????" -prune | sort -r
 }
 
 fn_expire_backup() {
 	# Double-check that we're on a backup destination to be completely
 	# sure we're deleting the right folder
-	if [ -z "$(fn_is_backup_destination "$(dirname -- "$1")")" ]; then
+	if [ -z "$(fn_find_backup_marker "$(dirname -- "$1")")" ]; then
 		fn_log_error "$1 is not on a backup destination - aborting."
 		exit 1
 	fi
@@ -59,9 +53,9 @@ fn_expire_backup() {
 # Source and destination information
 # -----------------------------------------------------------------------------
 
-SRC_FOLDER=${1%/}
-DEST_FOLDER=${2%/}
-EXCLUSION_FILE=$3
+SRC_FOLDER="${1%/}"
+DEST_FOLDER="${2%/}"
+EXCLUSION_FILE="$3"
 
 for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
 if [[ "$ARG" == *"'"* ]]; then
@@ -76,19 +70,14 @@ done
 
 # TODO: check that the destination supports hard links
 
-fn_backup_marker_path() {
-	echo "$1/backup.marker"
-}
+fn_backup_marker_path() { echo "$1/backup.marker"; }
+fn_find_backup_marker() { find "$(fn_backup_marker_path "$1")" 2>/dev/null; }
 
-fn_is_backup_destination() {
-	find "$(fn_backup_marker_path "$1")" 2>/dev/null
-}
-
-if [ -z "$(fn_is_backup_destination $DEST_FOLDER)" ]; then
+if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
 	fn_log_info "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
 	fn_log_info "If it is indeed a backup folder, you may add the marker file by running the following command:"
 	fn_log_info ""
-	fn_log_info "touch \"$(fn_backup_marker_path $DEST_FOLDER)\""
+	fn_log_info "touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
 	fn_log_info ""
 	exit 1
 fi
@@ -104,11 +93,10 @@ KEEP_ALL_DATE=$(($EPOCH - 86400))       # 1 day ago
 KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
-PROFILE_FOLDER="$HOME/.rsync_tmbackup"
-LOG_FILE="$PROFILE_FOLDER/$NOW.log"
-DEST=$DEST_FOLDER/$NOW
-PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 1)
-INPROGRESS_FILE=$DEST_FOLDER/backup.inprogress
+PROFILE_FOLDER="$HOME/.$APPNAME"
+DEST="$DEST_FOLDER/$NOW"
+PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
+INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
 
 # -----------------------------------------------------------------------------
 # Create profile folder if it doesn't exist
@@ -124,15 +112,13 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -f "$INPROGRESS_FILE" ]; then
-	if [ "$PREVIOUS_DEST" != "" ]; then
+	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
 		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		LINE_COUNT=$(fn_find_backups | sort | tail -n 2 | wc -l)
 		mv -- "$PREVIOUS_DEST" "$DEST"
-		if [ "$LINE_COUNT" -gt 1 ]; then
-			PREVIOUS_PREVIOUS_DEST=$(fn_find_backups | sort | tail -n 2 | head -n 1)
-			PREVIOUS_DEST=$PREVIOUS_PREVIOUS_DEST
+		if [ "$(fn_find_backups | wc -l)" -gt 1 ]; then
+			PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
 		else
 			PREVIOUS_DEST=""
 		fi
@@ -140,21 +126,21 @@ if [ -f "$INPROGRESS_FILE" ]; then
 fi
 
 # Run in a loop to handle the "No space left on device" logic.
-while [ "1" ]; do
+while : ; do
 
 	# -----------------------------------------------------------------------------
 	# Check if we are doing an incremental backup (if previous backup exists).
 	# -----------------------------------------------------------------------------
 
 	LINK_DEST_OPTION=""
-	if [ "$PREVIOUS_DEST" == "" ]; then
+	if [ -z "$PREVIOUS_DEST" ]; then
 		fn_log_info "No previous backup - creating new one."
 	else
 		# If the path is relative, it needs to be relative to the destination. To keep
 		# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
-		PREVIOUS_DEST=`cd \`dirname -- "$PREVIOUS_DEST"\`; pwd`"/"`basename -- "$PREVIOUS_DEST"`
+		PREVIOUS_DEST="$(cd "$PREVIOUS_DEST"; pwd)"
 		fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
-		LINK_DEST_OPTION="--link-dest=$PREVIOUS_DEST"
+		LINK_DEST_OPTION="--link-dest='$PREVIOUS_DEST'"
 	fi
 
 	# -----------------------------------------------------------------------------
@@ -215,7 +201,7 @@ while [ "1" ]; do
 	CMD="$CMD --itemize-changes"
 	CMD="$CMD --verbose"
 	CMD="$CMD --log-file '$LOG_FILE'"
-	if [ "$EXCLUSION_FILE" != "" ]; then
+	if [ -n "$EXCLUSION_FILE" ]; then
 		# We've already checked that $EXCLUSION_FILE doesn't contain a single quote
 		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
 	fi
@@ -262,10 +248,8 @@ while [ "1" ]; do
 	# Add symlink to last successful backup
 	# -----------------------------------------------------------------------------
 
-	cd "$DEST_FOLDER"
-	rm -f -- "latest"
-	ln -s -- $(basename -- "$DEST") "latest"
-	cd -
+	rm -rf -- "$DEST_FOLDER/latest"
+	ln -vs -- "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
 	rm -f -- "$INPROGRESS_FILE"
 	# TODO: grep for "^rsync error:.*$" in log
