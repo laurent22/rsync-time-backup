@@ -153,9 +153,9 @@ while : ; do
 	for FILENAME in $(fn_find_backups); do
 		BACKUP_DATE=$(basename "$FILENAME")
 
-		if   [ $COUNTER -ge 24 ]; then
+		if   [ $COUNTER -le 24 ]; then
 			: # Keep 24 newest backups.
-		elif [ $COUNTER -ge 54 ]; then
+		elif [ $COUNTER -le 54 ]; then
 			# Delete all but the most recent of each day.
 			[ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
 		else
