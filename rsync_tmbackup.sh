@@ -25,14 +25,6 @@ trap 'fn_terminate_script' SIGINT
 # Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 
-fn_parse_date() {
-	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
-	case "$OSTYPE" in
-		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
-		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
-	esac
-}
-
 fn_find_backups() {
 	find "$DEST_FOLDER" -type d -name "????-??-??-??????" -prune | sort -r
 }
@@ -47,6 +39,8 @@ fn_expire_backup() {
 
 	fn_log_info "Expiring $1"
 	rm -rf -- "$1"
+
+	let COUNTER-=1 # Don't count an expired backup
 }
 
 # -----------------------------------------------------------------------------
@@ -88,9 +82,6 @@ fi
 
 # Date logic
 NOW=$(date +"%Y-%m-%d-%H%M%S")
-EPOCH=$(date "+%s")
-KEEP_ALL_DATE=$(($EPOCH - 86400))       # 1 day ago
-KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.$APPNAME"
@@ -158,19 +149,13 @@ while : ; do
 
 	# Default value for $PREV ensures that the most recent backup is never deleted.
 	PREV="0000-00-00-000000"
-	for FILENAME in $(fn_find_backups | sort -r); do
+	COUNTER=0
+	for FILENAME in $(fn_find_backups); do
 		BACKUP_DATE=$(basename "$FILENAME")
-		TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
 
-		# Skip if failed to parse date...
-		if [ -z "$TIMESTAMP" ]; then
-			fn_log_warn "Could not parse date: $FILENAME"
-			continue
-		fi
-
-		if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
-			true
-		elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
+		if   [ $COUNTER -le 24 ]; then
+			: # Keep 24 newest backups.
+		elif [ $COUNTER -le 54 ]; then
 			# Delete all but the most recent of each day.
 			[ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
 		else
@@ -179,6 +164,7 @@ while : ; do
 		fi
 
 		PREV=$BACKUP_DATE
+		let COUNTER+=1
 	done
 
 	# -----------------------------------------------------------------------------
