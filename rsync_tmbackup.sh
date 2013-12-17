@@ -214,7 +214,6 @@ while : ; do
 
 	touch -- "$INPROGRESS_FILE"
 	eval $CMD
-	RSYNC_EXIT_CODE=$?
 
 	# -----------------------------------------------------------------------------
 	# Check if we ran out of space
@@ -222,8 +221,6 @@ while : ; do
 
 	# TODO: find better way to check for out of space condition without parsing log.
 	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
-
-	#rm -- "$LOG_FILE"
 
 	if [ -n "$NO_SPACE_LEFT" ]; then
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
@@ -239,9 +236,12 @@ while : ; do
 		continue
 	fi
 
-	if [ "$RSYNC_EXIT_CODE" != "0" ]; then
-		fn_log_error "Exited with error code $RSYNC_EXIT_CODE"
-		exit $RSYNC_EXIT_CODE
+	# -----------------------------------------------------------------------------
+	# Check whether rsync reported any errors
+	# -----------------------------------------------------------------------------
+	if [[ "$(sed -n '/rsync error:/p;/rsync:/p' -- "$LOG_FILE" | wc -l)" -ge 1 ]]; then
+		fn_log_error "Encountered error, please check $LOG_FILE for more details."
+		exit 1
 	fi
 
 	# -----------------------------------------------------------------------------
@@ -252,14 +252,9 @@ while : ; do
 	ln -vs -- "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
 	rm -f -- "$INPROGRESS_FILE"
+	rm -- "$LOG_FILE"
 
-	# -----------------------------------------------------------------------------
-	# Check whether rsync reported any errors
-	# -----------------------------------------------------------------------------
-	if [[ "$(sed -n '/rsync error:/p;/rsync:/p' -- "$LOG_FILE" | wc -l)" -ge 1 ]]; then
-		fn_log_error "rsync encountered error, please check $LOG_FILE for more details."
-	else
-		fn_log_info "Backup completed without errors."
-	fi	
+	fn_log_info "Backup completed without errors."
+
 	exit 0
 done
