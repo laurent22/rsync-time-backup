@@ -47,6 +47,7 @@ fn_expire_backup() {
 
 	fn_log_info "Expiring $1"
 	rm -rf -- "$1"
+	rm -- "$1.log"
 }
 
 # -----------------------------------------------------------------------------
@@ -185,7 +186,7 @@ while : ; do
 	# Start backup
 	# -----------------------------------------------------------------------------
 
-	LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
+	LOG_FILE="$DEST_FOLDER/$NOW.log"
 
 	fn_log_info "Starting backup..."
 	fn_log_info "From: $SRC_FOLDER"
@@ -222,8 +223,6 @@ while : ; do
 
 	# TODO: find better way to check for out of space condition without parsing log.
 	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
-
-	rm -- "$LOG_FILE"
 
 	if [ -n "$NO_SPACE_LEFT" ]; then
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
