@@ -239,8 +239,11 @@ while : ; do
 	# -----------------------------------------------------------------------------
 	# Check whether rsync reported any errors
 	# -----------------------------------------------------------------------------
-	if [[ "$(sed -n '/rsync error:/p;/rsync:/p' -- "$LOG_FILE" | wc -l)" -ge 1 ]]; then
-		fn_log_error "Encountered error, please check $LOG_FILE for more details."
+	if [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
+		fn_log_warn "Rsync reported a warning, please check '$LOG_FILE' for more details."
+	fi
+	if [ -n "$(grep "rsync error:" "$LOG_FILE")" ]; then
+		fn_log_error "Rsync reported an error, please check '$LOG_FILE' for more details."
 		exit 1
 	fi
 
@@ -252,8 +255,8 @@ while : ; do
 	ln -vs -- "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
 	rm -f -- "$INPROGRESS_FILE"
-	rm -- "$LOG_FILE"
-
+	rm -f -- "$LOG_FILE"
+	
 	fn_log_info "Backup completed without errors."
 
 	exit 0
