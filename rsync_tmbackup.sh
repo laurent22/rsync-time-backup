@@ -46,7 +46,7 @@ fn_expire_backup() {
 	fi
 
 	fn_log_info "Expiring $1"
-	rm -rf -- "$1"
+	nohup rm -rf -- "$1" &
 	nohup rm -- "$1.log" &
 }
 
