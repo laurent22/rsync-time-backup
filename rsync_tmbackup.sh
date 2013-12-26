@@ -251,7 +251,7 @@ while : ; do
 	ln -s -- "$(basename "$DEST")" "$DEST_FOLDER/latest"
 
 	rm -rf -- "$DEST_FOLDER/latest.log"
-	ln -s -- "$(basename "LOG_FILE")" "$DEST_FOLDER/latest.log"
+	ln -s -- "$(basename "$LOG_FILE")" "$DEST_FOLDER/latest.log"
 
 	rm -f -- "$INPROGRESS_FILE"
 	# TODO: grep for "^rsync error:.*$" in log
