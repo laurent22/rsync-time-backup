@@ -1,6 +1,6 @@
 # Rsync time backup
 
-Time Machine style backup with rsync. Should work on Linux (tested on some distros), Mac OS X (fully tested) and Windows with Cygwin (not tested yet but feedback would be welcome).
+Time Machine style backup with rsync. Should work on Linux (tested), Mac OS X (tested) and Windows with Cygwin (not tested yet but feedback would be welcome).
 
 # Installation
 
