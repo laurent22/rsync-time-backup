@@ -9,6 +9,14 @@ APPNAME=$(basename $0 | sed "s/\.sh$//")
 fn_log_info()  { echo "$APPNAME: $1"; }
 fn_log_warn()  { echo "$APPNAME: [WARNING] $1" 1>&2; }
 fn_log_error() { echo "$APPNAME: [ERROR] $1" 1>&2; }
+fn_log_info_cmd()  {
+    if [ -n "$SSH_CMD" ]
+	then
+	    echo "$APPNAME: $SSH_CMD '$1'";
+	else
+	    echo "$APPNAME: $1";
+	fi
+}
 
 # -----------------------------------------------------------------------------
 # Make sure everything really stops when CTRL+C is pressed
@@ -34,7 +42,7 @@ fn_parse_date() {
 }
 
 fn_find_backups() {
-	find "$DEST_FOLDER" -type d -name "????-??-??-??????" -prune | sort -r
+	fn_run_cmd "find "$DEST_FOLDER" -type d -name "????-??-??-??????" -prune | sort -r"
 }
 
 fn_expire_backup() {
@@ -46,16 +54,71 @@ fn_expire_backup() {
 	fi
 
 	fn_log_info "Expiring $1"
-	rm -rf -- "$1"
+	fn_rm "$1"
+}
+
+fn_parse_ssh() {
+    if [[ "$DEST_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]
+    then
+        SSH_USER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
+        SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
+        SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
+        SSH_CMD="ssh ${SSH_USER}@${SSH_HOST}"
+        SSH_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
+    fi
+}
+
+fn_run_cmd() {
+    if [ -n "$SSH_CMD" ]
+    then
+        eval "$SSH_CMD '$1'"
+    else
+        eval $1
+    fi
+}
+
+fn_find() {
+    fn_run_cmd "find $1"  2>/dev/null
+}
+
+fn_get_absolute_path() {
+    fn_run_cmd "cd $1;pwd"
+}
+
+fn_mkdir() {
+    fn_run_cmd "mkdir -p -- $1"
+}
+
+fn_rm() {
+    fn_run_cmd "rm -rf -- $1"
+}
+
+fn_touch() {
+    fn_run_cmd "touch -- $1"
+}
+
+fn_ln() {
+    fn_run_cmd "ln -vs -- $1 $2"
 }
 
 # -----------------------------------------------------------------------------
 # Source and destination information
 # -----------------------------------------------------------------------------
+SSH_USER=""
+SSH_HOST=""
+SSH_DEST_FOLDER=""
+SSH_CMD=""
+SSH_FOLDER_PREFIX=""
 
 SRC_FOLDER="${1%/}"
 DEST_FOLDER="${2%/}"
 EXCLUSION_FILE="$3"
+
+fn_parse_ssh
+
+if [ -n "$SSH_DEST_FOLDER" ]; then
+    DEST_FOLDER="$SSH_DEST_FOLDER"
+fi
 
 for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
 if [[ "$ARG" == *"'"* ]]; then
@@ -71,13 +134,13 @@ done
 # TODO: check that the destination supports hard links
 
 fn_backup_marker_path() { echo "$1/backup.marker"; }
-fn_find_backup_marker() { find "$(fn_backup_marker_path "$1")" 2>/dev/null; }
+fn_find_backup_marker() { fn_find "$(fn_backup_marker_path "$1")" 2>/dev/null; }
 
 if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
 	fn_log_info "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
 	fn_log_info "If it is indeed a backup folder, you may add the marker file by running the following command:"
 	fn_log_info ""
-	fn_log_info "touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
+	fn_log_info_cmd "touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
 	fn_log_info ""
 	exit 1
 fi
@@ -111,12 +174,12 @@ fi
 # Handle case where a previous backup failed or was interrupted.
 # -----------------------------------------------------------------------------
 
-if [ -f "$INPROGRESS_FILE" ]; then
+if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
-		fn_log_info "$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		mv -- "$PREVIOUS_DEST" "$DEST"
+		fn_log_info "$SSH_FOLDER_PREFIX$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
+		fn_run_cmd "mv -- $PREVIOUS_DEST $DEST"
 		if [ "$(fn_find_backups | wc -l)" -gt 1 ]; then
 			PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
 		else
@@ -138,8 +201,8 @@ while : ; do
 	else
 		# If the path is relative, it needs to be relative to the destination. To keep
 		# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
-		PREVIOUS_DEST="$(cd "$PREVIOUS_DEST"; pwd)"
-		fn_log_info "Previous backup found - doing incremental backup from $PREVIOUS_DEST"
+		PREVIOUS_DEST="$(fn_get_absolute_path "$PREVIOUS_DEST")"
+		fn_log_info "Previous backup found - doing incremental backup from $SSH_FOLDER_PREFIX$PREVIOUS_DEST"
 		LINK_DEST_OPTION="--link-dest='$PREVIOUS_DEST'"
 	fi
 
@@ -147,9 +210,9 @@ while : ; do
 	# Create destination folder if it doesn't already exists
 	# -----------------------------------------------------------------------------
 
-	if [ ! -d "$DEST" ]; then
-		fn_log_info "Creating destination $DEST"
-		mkdir -p -- "$DEST"
+	if [ -z "$(fn_find "$DEST -type d" 2>/dev/null)" ]; then
+		fn_log_info "Creating destination $SSH_FOLDER_PREFIX$DEST"
+		fn_mkdir "$DEST"
 	fi
 
 	# -----------------------------------------------------------------------------
@@ -189,9 +252,12 @@ while : ; do
 
 	fn_log_info "Starting backup..."
 	fn_log_info "From: $SRC_FOLDER"
-	fn_log_info "To:   $DEST"
+	fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST"
 
 	CMD="rsync"
+	if [ -n "$SSH_CMD" ]; then
+	    CMD="$CMD  -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+	fi
 	CMD="$CMD --compress"
 	CMD="$CMD --numeric-ids"
 	CMD="$CMD --links"
@@ -206,13 +272,13 @@ while : ; do
 		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
 	fi
 	CMD="$CMD $LINK_DEST_OPTION"
-	CMD="$CMD -- '$SRC_FOLDER/' '$DEST/'"
+	CMD="$CMD -- '$SRC_FOLDER/' '$SSH_FOLDER_PREFIX$DEST/'"
 	CMD="$CMD | grep -E '^deleting|[^/]$'"
 
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
 
-	touch -- "$INPROGRESS_FILE"
+	fn_touch "$INPROGRESS_FILE"
 	eval $CMD
 
 	# -----------------------------------------------------------------------------
@@ -251,10 +317,10 @@ while : ; do
 	# Add symlink to last successful backup
 	# -----------------------------------------------------------------------------
 
-	rm -rf -- "$DEST_FOLDER/latest"
-	ln -vs -- "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+	fn_rm "$DEST_FOLDER/latest"
+	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
-	rm -f -- "$INPROGRESS_FILE"
+	fn_rm "$INPROGRESS_FILE"
 	rm -f -- "$LOG_FILE"
 	
 	fn_log_info "Backup completed without errors."
