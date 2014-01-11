@@ -44,6 +44,8 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 # TODO
 
+* Check source and destination file-system. If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2.
+
 * Minor changes (see TODO comments in the source).
 
 * Backup to remote drive?
