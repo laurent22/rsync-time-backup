@@ -22,7 +22,7 @@ Time Machine style backup with rsync. Should work on Linux (tested), Mac OS X (t
 	
 ## Exclude file
 
-An optional exclude file can be provided as a third parameter. It should be compabible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
 # Features
 
@@ -30,7 +30,7 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Files that haven't changed from one backup to the next are hard-linked to the previous backup so take very little extra space.
 
-* Safety check - the backup will only happen if the destination has explicitely been marked as a backup destination.
+* Safety check - the backup will only happen if the destination has explicitly been marked as a backup destination.
 
 * Resume feature - if a backup has failed or was interrupted, the tool will resume from there on the next backup.
 
