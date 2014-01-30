@@ -25,7 +25,7 @@ trap 'fn_terminate_script' SIGINT
 # Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 fn_display_usage() {
-	fn_log_info "Usage : $(basename $0) <source> <destination> [exclude-pattern file]"
+	fn_log_info "Usage : $(basename $0) <source> [destination] [exclude-pattern file]"
 }
 
 fn_parse_date() {
@@ -57,13 +57,19 @@ fn_expire_backup() {
 # Source and destination information
 # -----------------------------------------------------------------------------
 #display usage information if required arguments are not passed
-if [[ "${#@}" -lt 2 ]]; then
+if [[ "${#@}" -lt 1 ]]; then
 	fn_display_usage
 	exit 1
 fi
 
 SRC_FOLDER="${1%/}"
-DEST_FOLDER="${2%/}"
+#if destination folder is not specified assume current folder
+if [ -z ${2} ]; then
+	DEST_FOLDER="."
+	echo ${2}
+else
+	DEST_FOLDER="${2%/}"
+fi
 EXCLUSION_FILE="$3"
 
 for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
