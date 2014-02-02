@@ -1,6 +1,8 @@
 # Rsync time backup
 
-Time Machine style backup with rsync. Should work on Linux, OS X and Windows with Cygwin.
+Time Machine style backup with rsync. Should work on Linux, OS X and Windows with Cygwin. The main advantage over Time Machine is the flexibility as it can backup from/to any filesystem and works on any platform. You can also backup, for example, to a Truecrypt drive without any problem.
+
+On OS X, it has a few disadvantages compared to Time Machine - in particular it doesn't auto-start when the backup drive is plugged (though it can be achieved using a launch agent), and no specific GUI is provided to restore files. Instead files can be restored by using any file explorer, including Finder, or the command line.
 
 # Installation
 
