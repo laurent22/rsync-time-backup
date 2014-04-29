@@ -1,6 +1,8 @@
 # Rsync time backup
 
-Time Machine style backup with rsync. Should work on Linux (tested), Mac OS X (tested) and Windows with Cygwin (not tested yet but feedback would be welcome).
+Time Machine style backup with rsync. Should work on Linux, OS X and Windows with Cygwin. The main advantage over Time Machine is the flexibility as it can backup from/to any filesystem and works on any platform. You can also backup, for example, to a Truecrypt drive without any problem.
+
+On OS X, it has a few disadvantages compared to Time Machine - in particular it doesn't auto-start when the backup drive is plugged (though it can be achieved using a launch agent), it requires some knowledge of the command line, and no specific GUI is provided to restore files. Instead files can be restored by using any file explorer, including Finder, or the command line.
 
 # Installation
 
@@ -22,7 +24,7 @@ Time Machine style backup with rsync. Should work on Linux (tested), Mac OS X (t
 	
 ## Exclude file
 
-An optional exclude file can be provided as a third parameter. It should be compabible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
 # Features
 
@@ -30,7 +32,7 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Files that haven't changed from one backup to the next are hard-linked to the previous backup so take very little extra space.
 
-* Safety check - the backup will only happen if the destination has explicitely been marked as a backup destination.
+* Safety check - the backup will only happen if the destination has explicitly been marked as a backup destination.
 
 * Resume feature - if a backup has failed or was interrupted, the tool will resume from there on the next backup.
 
