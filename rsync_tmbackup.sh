@@ -51,6 +51,33 @@ fn_expire_backup() {
 }
 
 # -----------------------------------------------------------------------------
+# Compose the actual rsync shell command
+# -----------------------------------------------------------------------------
+
+fn_compose_command() {
+	CMD="ionice -c 3"
+	CMD="$CMD rsync"
+	CMD="$CMD --compress"
+	CMD="$CMD --numeric-ids"
+	CMD="$CMD --links"
+	CMD="$CMD --hard-links"
+	CMD="$CMD --one-file-system"
+	CMD="$CMD --archive"
+	CMD="$CMD --itemize-changes"
+	CMD="$CMD --verbose"
+	CMD="$CMD --log-file '$LOG_FILE'"
+	if [ -n "$EXCLUSION_FILE" ]; then
+		# We've already checked that $EXCLUSION_FILE doesn't contain a single quote
+		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
+	fi
+	CMD="$CMD $LINK_DEST_OPTION"
+	CMD="$CMD -- '$SRC_FOLDER/' '$DEST/'"
+	CMD="$CMD | grep -E '^deleting|[^/]$'"
+    
+    echo $CMD
+}
+
+# -----------------------------------------------------------------------------
 # Source and destination information
 # -----------------------------------------------------------------------------
 
@@ -192,23 +219,7 @@ while : ; do
 	fn_log_info "From: $SRC_FOLDER"
 	fn_log_info "To:   $DEST"
 
-	CMD="rsync"
-	CMD="$CMD --compress"
-	CMD="$CMD --numeric-ids"
-	CMD="$CMD --links"
-	CMD="$CMD --hard-links"
-	CMD="$CMD --one-file-system"
-	CMD="$CMD --archive"
-	CMD="$CMD --itemize-changes"
-	CMD="$CMD --verbose"
-	CMD="$CMD --log-file '$LOG_FILE'"
-	if [ -n "$EXCLUSION_FILE" ]; then
-		# We've already checked that $EXCLUSION_FILE doesn't contain a single quote
-		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
-	fi
-	CMD="$CMD $LINK_DEST_OPTION"
-	CMD="$CMD -- '$SRC_FOLDER/' '$DEST/'"
-	CMD="$CMD | grep -E '^deleting|[^/]$'"
+    CMD=$(fn_compose_command)
 
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
