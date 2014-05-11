@@ -55,7 +55,7 @@ fn_expire_backup() {
 # -----------------------------------------------------------------------------
 
 fn_compose_command() {
-    CMD="ionice -c 3"
+	CMD="ionice -c 3"
 	CMD="$CMD rsync"
 	CMD="$CMD --compress"
 	CMD="$CMD --numeric-ids"
