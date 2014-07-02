@@ -208,9 +208,9 @@ while : ; do
 		# FlyinButrs: If $EXCLUSION_FILE is a file that exists, pass it as a file. If not, use it as a string exclude.
 		# 
 		if [ -f "$EXCLUSION_FILE" ]; then
-			CMD="$CMD --exclude '$EXCLUSION_FILE'"
-		else 
 			CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
+		else 
+			CMD="$CMD --exclude '$EXCLUSION_FILE'"
 		fi
 	fi
 	CMD="$CMD $LINK_DEST_OPTION"
