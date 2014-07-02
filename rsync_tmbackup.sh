@@ -210,7 +210,10 @@ while : ; do
 		if [ -f "$EXCLUSION_FILE" ]; then
 			CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
 		else 
-			CMD="$CMD --exclude '$EXCLUSION_FILE'"
+                        for EXCPATT in $(echo $EXCLUSION_FILE | tr " " "\n")
+                        do
+                              CMD="$CMD --exclude '$EXCPATT'"
+                        done
 		fi
 	fi
 	CMD="$CMD $LINK_DEST_OPTION"
