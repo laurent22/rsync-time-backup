@@ -78,7 +78,7 @@ if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
 	fn_log_info "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
 	fn_log_info "If it is indeed a backup folder, you may add the marker file by running the following command:"
 	fn_log_info ""
-	fn_log_info "touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
+	fn_log_info "mkdir -p -- \"$DEST_FOLDER\" ; touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
 	fn_log_info ""
 	exit 1
 fi
