@@ -10,8 +10,7 @@ fn_log_info()  { echo "$APPNAME: $1"; }
 fn_log_warn()  { echo "$APPNAME: [WARNING] $1" 1>&2; }
 fn_log_error() { echo "$APPNAME: [ERROR] $1" 1>&2; }
 fn_log_info_cmd()  {
-    if [ -n "$SSH_CMD" ]
-	then
+    if [ -n "$SSH_CMD" ]; then
 	    echo "$APPNAME: $SSH_CMD '$1'";
 	else
 	    echo "$APPNAME: $1";
@@ -58,8 +57,7 @@ fn_expire_backup() {
 }
 
 fn_parse_ssh() {
-    if [[ "$DEST_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]
-    then
+    if [[ "$DEST_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]; then
         SSH_USER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
         SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
         SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
@@ -69,8 +67,7 @@ fn_parse_ssh() {
 }
 
 fn_run_cmd() {
-    if [ -n "$SSH_CMD" ]
-    then
+    if [ -n "$SSH_CMD" ]; then
         eval "$SSH_CMD '$1'"
     else
         eval $1
@@ -121,7 +118,7 @@ if [ -n "$SSH_DEST_FOLDER" ]; then
 fi
 
 for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
-if [[ "$ARG" == *"'"* ]]; then
+	if [[ "$ARG" == *"'"* ]]; then
 		fn_log_error 'Arguments may not have any single quote characters.'
 		exit 1
 	fi
