@@ -95,8 +95,8 @@ fi
 # Date logic
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 EPOCH=$(date "+%s")
-KEEP_ALL_DATE=$(($EPOCH - 86400))       # 1 day ago
-KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
+KEEP_ALL_DATE=$((EPOCH - 86400))       # 1 day ago
+KEEP_DAILIES_DATE=$((EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.$APPNAME"
