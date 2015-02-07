@@ -113,6 +113,10 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -f "$INPROGRESS_FILE" ]; then
+	if pgrep --pidfile "$INPROGRESS_FILE" > /dev/null 2>&1 ; then
+		fn_log_error "Previous backup task is still active - aborting."
+		exit 1
+	fi
 	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
@@ -213,7 +217,7 @@ while : ; do
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
 
-	touch -- "$INPROGRESS_FILE"
+	echo "$$" > "$INPROGRESS_FILE"
 	eval $CMD
 
 	# -----------------------------------------------------------------------------
