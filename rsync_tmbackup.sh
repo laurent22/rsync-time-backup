@@ -41,13 +41,18 @@ fn_find_backups() {
 fn_expire_backup() {
 	# Double-check that we're on a backup destination to be completely
 	# sure we're deleting the right folder
-	if [ -z "$(fn_find_backup_marker "$(dirname -- "$1")")" ]; then
+	if [ -z "$(fn_find_backup_marker "$(dirname "$1")")" ]; then
 		fn_log_error "$1 is not on a backup destination - aborting."
 		exit 1
 	fi
 
 	fn_log_info "Expiring $1"
-	rm -rf -- "$1"
+	TMP_EMPTY_DIR="$(mktemp -d /tmp/emptydir.XXXXXX)"
+	rsync -a --delete "$TMP_EMPTY_DIR/" "$1"
+	rmdir "$1" "$TMP_EMPTY_DIR"
+
+	fn_log_info "Expiring $1.log"
+	rm -f -- "$1.log"
 }
 
 # -----------------------------------------------------------------------------
@@ -90,8 +95,8 @@ fi
 # Date logic
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 EPOCH=$(date "+%s")
-KEEP_ALL_DATE=$(($EPOCH - 86400))       # 1 day ago
-KEEP_DAILIES_DATE=$(($EPOCH - 2678400)) # 31 days ago
+KEEP_ALL_DATE=$((EPOCH - 86400))       # 1 day ago
+KEEP_DAILIES_DATE=$((EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
 PROFILE_FOLDER="$HOME/.$APPNAME"
@@ -113,6 +118,10 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -f "$INPROGRESS_FILE" ]; then
+	if pgrep -F "$INPROGRESS_FILE" > /dev/null 2>&1 ; then
+		fn_log_error "Previous backup task is still active - aborting."
+		exit 1
+	fi
 	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
@@ -123,6 +132,8 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		else
 			PREVIOUS_DEST=""
 		fi
+		# update PID to current process to avoid multiple concurrent resumes
+		echo "$$" > "$INPROGRESS_FILE"
 	fi
 fi
 
@@ -186,7 +197,7 @@ while : ; do
 	# Start backup
 	# -----------------------------------------------------------------------------
 
-	LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
+	LOG_FILE="$DEST_FOLDER/$NOW.log"
 
 	fn_log_info "Starting backup..."
 	fn_log_info "From: $SRC_FOLDER"
@@ -213,7 +224,7 @@ while : ; do
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
 
-	touch -- "$INPROGRESS_FILE"
+	echo "$$" > "$INPROGRESS_FILE"
 	eval $CMD
 
 	# -----------------------------------------------------------------------------
@@ -254,10 +265,12 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 	rm -rf -- "$DEST_FOLDER/latest"
-	ln -vs -- "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+	ln -s -- "$(basename "$DEST")" "$DEST_FOLDER/latest"
+
+	rm -rf -- "$DEST_FOLDER/latest.log"
+	ln -s -- "$(basename "$LOG_FILE")" "$DEST_FOLDER/latest.log"
 
 	rm -f -- "$INPROGRESS_FILE"
-	rm -f -- "$LOG_FILE"
 	
 	fn_log_info "Backup completed without errors."
 
