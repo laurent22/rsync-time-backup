@@ -265,7 +265,6 @@ while : ; do
 	ln -s -- "$(basename "$LOG_FILE")" "$DEST_FOLDER/latest.log"
 
 	rm -f -- "$INPROGRESS_FILE"
-	rm -f -- "$LOG_FILE"
 	
 	fn_log_info "Backup completed without errors."
 
