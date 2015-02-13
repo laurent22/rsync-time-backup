@@ -132,6 +132,8 @@ if [ -f "$INPROGRESS_FILE" ]; then
 		else
 			PREVIOUS_DEST=""
 		fi
+		# update PID to current process to avoid multiple concurrent resumes... 
+		echo "$$" > "$INPROGRESS_FILE"
 	fi
 fi
 
