@@ -113,7 +113,7 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -f "$INPROGRESS_FILE" ]; then
-	if pgrep -F "$INPROGRESS_FILE" > /dev/null 2>&1 ; then
+	if pgrep -F "$INPROGRESS_FILE" "$APPNAME"> /dev/null 2>&1 ; then
 		fn_log_error "Previous backup task is still active - aborting."
 		exit 1
 	fi
