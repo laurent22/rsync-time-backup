@@ -56,7 +56,7 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 The MIT License (MIT)
 
-Copyright (c) 2013-2014 Laurent Cozic
+Copyright (c) 2013-2015 Laurent Cozic
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -75,5 +75,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/laurent22/rsync-time-backup/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
