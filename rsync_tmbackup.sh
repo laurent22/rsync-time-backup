@@ -36,6 +36,7 @@ fn_parse_date() {
     # Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
     case "$OSTYPE" in
         linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
+        cygwin*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
         darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
     esac
 }
@@ -57,7 +58,8 @@ fn_expire_backup() {
 }
 
 fn_parse_ssh() {
-    if [[ "$DEST_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]; then
+    if [[ "$DEST_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]
+    then
         SSH_USER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
         SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
         SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
@@ -67,7 +69,8 @@ fn_parse_ssh() {
 }
 
 fn_run_cmd() {
-    if [ -n "$SSH_CMD" ]; then
+    if [ -n "$SSH_CMD" ]
+    then
         eval "$SSH_CMD '$1'"
     else
         eval $1
@@ -118,7 +121,7 @@ if [ -n "$SSH_DEST_FOLDER" ]; then
 fi
 
 for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
-    if [[ "$ARG" == *"'"* ]]; then
+if [[ "$ARG" == *"'"* ]]; then
         fn_log_error 'Arguments may not have any single quote characters.'
         exit 1
     fi
@@ -137,7 +140,7 @@ if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
     fn_log_info "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
     fn_log_info "If it is indeed a backup folder, you may add the marker file by running the following command:"
     fn_log_info ""
-    fn_log_info_cmd "touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
+    fn_log_info_cmd "mkdir -p -- \"$DEST_FOLDER\" ; touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
     fn_log_info ""
     exit 1
 fi
@@ -157,6 +160,7 @@ PROFILE_FOLDER="$HOME/.$APPNAME"
 DEST="$DEST_FOLDER/$NOW"
 PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
 INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
+MYPID="$$"
 
 # -----------------------------------------------------------------------------
 # Create profile folder if it doesn't exist
@@ -172,6 +176,12 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
+    RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
+    if [ "$RUNNINGPID"="$(pgrep "$APPNAME")" ]; then
+        fn_log_error "Previous backup task is still active - aborting."
+        exit 1
+    fi
+
     if [ -n "$PREVIOUS_DEST" ]; then
         # - Last backup is moved to current backup folder so that it can be resumed.
         # - 2nd to last backup becomes last backup.
@@ -182,6 +192,8 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
         else
             PREVIOUS_DEST=""
         fi
+        # update PID to current process to avoid multiple concurrent resumes
+        fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
     fi
 fi
 
@@ -275,7 +287,8 @@ while : ; do
     fn_log_info "Running command:"
     fn_log_info "$CMD"
 
-    fn_touch "$INPROGRESS_FILE"
+    fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
+
     eval $CMD
 
     # -----------------------------------------------------------------------------
