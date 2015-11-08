@@ -32,6 +32,8 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Each backup is on its own folder named after the current timestamp. Files can be copied and restored directly, without any intermediate tool.
 
+* Backup to remote destinations over SSH.
+
 * Files that haven't changed from one backup to the next are hard-linked to the previous backup so take very little extra space.
 
 * Safety check - the backup will only happen if the destination has explicitly been marked as a backup destination.
@@ -44,21 +46,17 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * "latest" symlink that points to the latest successful backup.
 
-* The application is just one bash script that can be easily edited.
-
 # TODO
 
 * Check source and destination file-system. If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2.
 
 * Minor changes (see TODO comments in the source).
 
-* Backup to remote drive?
-
 # LICENSE
 
 The MIT License (MIT)
 
-Copyright (c) 2013-2015 Laurent Cozic
+Copyright (c) 2013-2016 Laurent Cozic
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
