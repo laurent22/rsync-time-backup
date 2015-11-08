@@ -176,11 +176,18 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
-    RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
-    if [ "$RUNNINGPID"="$(pgrep "$APPNAME")" ]; then
-        fn_log_error "Previous backup task is still active - aborting."
-        exit 1
-    fi
+	if [ "$OSTYPE" == "cygwin" ]; then
+		# TODO: Cygwin reports the name of currently running Bash scripts as just "/usr/bin/bash"
+		# TODO: so the pgrep solution below won't work. Need to use "procps -wwFAH", grep
+		# TODO: the script name, and extract the process ID from it.
+		fn_log_warn "Cygwin only: Previous backup task has either been interrupted or it might still be active, but there is currently no check for this. Assuming that the task was simply interrupted."
+	else 
+	    RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
+	    if [ "$RUNNINGPID"="$(pgrep "$APPNAME")" ]; then
+	        fn_log_error "Previous backup task is still active - aborting."
+	        exit 1
+	    fi
+	fi
 
     if [ -n "$PREVIOUS_DEST" ]; then
         # - Last backup is moved to current backup folder so that it can be resumed.
