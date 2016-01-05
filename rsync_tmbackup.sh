@@ -114,6 +114,31 @@ SRC_FOLDER="${1%/}"
 DEST_FOLDER="${2%/}"
 EXCLUSION_FILE="$3"
 
+if [ -z "$3" ]; then
+    # A directory under each source entitled '.sync' could contain an 
+    # 'IgnoreList', which could allow for tighter control over what
+    # gets excluded from each sync, instead of limiting the use of one
+    # master exclusion_list or calling the use of an exclusion_list
+    # each time. -i.e. possible small feature add.
+    # EX:
+    #           SRC_FOLDER
+    #               |
+    #               + .sync
+    #               |    |
+    #               |    + Ignorelist
+    #               + file
+    #               |
+    #               + file...
+    if [ -f "$SRC_FOLDER/.sync/IgnoreList" ]; then
+        # if both the #3 parameter (exclusion_file) and the
+        # 'ignorelist' file exists, prompt the end user and set the
+        # variable.
+        fn_run_cmd "echo $APPNAME: EXCLUSION_FILE parameter missing. Assuming $SRC_FOLDER/.sync/IgnoreList usage."
+        EXCLUSION_FILE="$SRC_FOLDER/.sync/IgnoreList"
+    fi
+    # ...else leave variable blank.
+fi
+
 fn_parse_ssh
 
 if [ -n "$SSH_DEST_FOLDER" ]; then
