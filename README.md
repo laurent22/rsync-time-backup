@@ -12,17 +12,17 @@ On OS X, it has a few disadvantages compared to Time Machine - in particular it 
 
 # Usage
 
-	rsync_tmbackup.sh <source> <destination> [excluded-pattern-path]
+	rsync_tmbackup.sh -s <source> -d <destination> -e <excluded-pattern-file>
 
 ## Examples
 	
 * Backup the home folder to backup_drive
 	
-		rsync_tmbackup.sh /home /mnt/backup_drive  
+		rsync_tmbackup.sh -s /home -d /mnt/backup_drive  
 
 * Backup with exclusion list:
 	
-		rsync_tmbackup.sh /home /mnt/backup_drive excluded_patterns.txt
+		rsync_tmbackup.sh -s /home -d /mnt/backup_drive -e excluded_patterns.txt
 	
 ## Exclude file
 
