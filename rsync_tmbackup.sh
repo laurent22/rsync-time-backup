@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+unset PATH	# avoid accidental use of $PATH
+
 APPNAME=$(basename $0 | sed "s/\.sh$//")
 
 # -----------------------------------------------------------------------------
