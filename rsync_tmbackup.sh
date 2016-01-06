@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-unset PATH	# avoid accidental use of $PATH
-
 APPNAME=$(basename $0 | sed "s/\.sh$//")
 
 # -----------------------------------------------------------------------------
@@ -112,9 +110,34 @@ SSH_DEST_FOLDER=""
 SSH_CMD=""
 SSH_FOLDER_PREFIX=""
 
-SRC_FOLDER="${1%/}"
-DEST_FOLDER="${2%/}"
-EXCLUSION_FILE="$3"
+args=`getopt s:d:e: $*`
+if [ $? != 0 ]
+then
+    fn_run_cmd "echo Usage: $APPNAME: -s <SOURCE> -d <DESTINATION> -e <EXCLUSION>"
+    exit 2
+fi
+set -- $args
+for i
+do
+    case "$i"
+        in
+        -s)
+        fn_run_cmd "echo $APPNAME: SRC_FOLDER arg is '$2/'"; SRC_FOLDER="${2%/}"; shift;
+        shift;;
+    -d)
+        fn_run_cmd "echo $APPNAME: DEST_FOLDER arg is '$2/'"; DEST_FOLDER="${2%/}"; shift;
+        shift;;
+    -e)
+        fn_run_cmd "echo $APPNAME: EXCLUSION_FILE arg is '$2'"; EXCLUSION_FILE="$2"; shift;
+        shift;;
+    --)
+        shift; break;;
+esac
+done
+
+## SRC_FOLDER="${1%/}"
+## DEST_FOLDER="${2%/}"
+## EXCLUSION_FILE="$3"
 
 if [ -z "$3" ]; then
     # A directory under each source entitled '.sync' could contain an 
