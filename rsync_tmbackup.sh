@@ -4,6 +4,7 @@
 if (( `/usr/bin/id -u` != 0 )); then { $ECHO "Sorry, must be root.  Exiting..."; exit 1; } fi
 
 APPNAME=$(basename $0 | sed "s/\.sh$//")
+DRY_RUN=false
 
 # -----------------------------------------------------------------------------
 # Log functions
@@ -283,9 +284,11 @@ while : ; do
     # Create destination folder if it doesn't already exists
     # -----------------------------------------------------------------------------
 
-    if [ -z "$(fn_find "$DEST -type d" 2>/dev/null)" ]; then
-        fn_log_info "Creating destination $SSH_FOLDER_PREFIX$DEST"
-        fn_mkdir "$DEST"
+    if [ $DRY_RUN != true ]; then
+        if [ -z "$(fn_find "$DEST -type d" 2>/dev/null)" ]; then
+            fn_log_info "Creating destination $SSH_FOLDER_PREFIX$DEST"
+            fn_mkdir "$DEST"
+        fi
     fi
 
     # -----------------------------------------------------------------------------
@@ -294,51 +297,58 @@ while : ; do
 
     # Default value for $PREV ensures that the most recent backup is
     # never deleted.
-    PREV="0000-00-00-000000"
-    for FILENAME in $(fn_find_backups | sort -r); do
-        BACKUP_DATE=$(basename "$FILENAME")
-        TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
+    if [ $DRY_RUN != true ]; then
+        PREV="0000-00-00-000000"
+        for FILENAME in $(fn_find_backups | sort -r); do
+            BACKUP_DATE=$(basename "$FILENAME")
+            TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
 
-        # Skip if failed to parse date...
-        if [ -z "$TIMESTAMP" ]; then
-            fn_log_warn "Could not parse date: $FILENAME"
-            continue
-        fi
+            # Skip if failed to parse date...
+            if [ -z "$TIMESTAMP" ]; then
+                fn_log_warn "Could not parse date: $FILENAME"
+                continue
+            fi
 
-        if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
-            true
-        elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
-            # Delete all but the most recent of each day.
-            [ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
-        else
-            # Delete all but the most recent of each month.
-            [ "${BACKUP_DATE:0:7}" == "${PREV:0:7}" ] && fn_expire_backup "$FILENAME"
-        fi
+            if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
+                true
+            elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
+                # Delete all but the most recent of each day.
+                [ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
+            else
+                # Delete all but the most recent of each month.
+                [ "${BACKUP_DATE:0:7}" == "${PREV:0:7}" ] && fn_expire_backup "$FILENAME"
+            fi
 
-        PREV=$BACKUP_DATE
-    done
+            PREV=$BACKUP_DATE
+        done
+    fi
 
     # -----------------------------------------------------------------------------
     # Start backup
     # -----------------------------------------------------------------------------
 
-    LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
 
-    fn_log_info "Starting backup..."
-    fn_log_info "From: $SRC_FOLDER"
-    fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST"
+    if [ !$DRY_RUN != true ]; then
+        LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
+
+        fn_log_info "Starting backup..."
+        fn_log_info "From: $SRC_FOLDER"
+        fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST"
+    fi 
 
     CMD="rsync"
     if [ -n "$SSH_CMD" ]; then
         CMD="$CMD  -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
     fi
-    if [ $DRY_RUN ]; then
+    if [ $DRY_RUN == true ]; then
         CMD="$CMD --dry-run"
     fi
     CMD="$CMD --compress"
     CMD="$CMD --numeric-ids"
-    CMD="$CMD --links"
-    CMD="$CMD --hard-links"
+    if [ $DRY_RUN != true ]; then
+        CMD="$CMD --links"
+        CMD="$CMD --hard-links"
+    fi
     CMD="$CMD --one-file-system"
     CMD="$CMD --archive"
     CMD="$CMD --itemize-changes"
@@ -406,8 +416,11 @@ while : ; do
     # Add symlink to last successful backup
     # -----------------------------------------------------------------------------
 
-    fn_rm "$DEST_FOLDER/latest"
-    fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+
+    if [ $DRY_RUN != true ]; then
+        fn_rm "$DEST_FOLDER/latest"
+        fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+    fi
 
     fn_rm "$INPROGRESS_FILE"
     rm -f -- "$LOG_FILE"
