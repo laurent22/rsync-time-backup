@@ -17,15 +17,25 @@ On OS X, it has a few disadvantages compared to Time Machine - in particular it 
 
 	sudo rsync_tmbackup.sh -s <source> -d <destination> -e <excluded-pattern-file>
 
+## Argument Flags
+The arguments can be given in any order 
+* -s    The source location.
+* -d    The desination location
+* -x    Designates a dry-run should be made (no actual folders created, backup made, or links updated).
+
 ## Examples
 
-* Backup the home folder to backup_drive
+* Backup the `home` folder to `backup_drive`
 
 		sudo rsync_tmbackup.sh -s /home -d /mnt/backup_drive
 
-* Backup with exclusion list:
+* Same as above but with exclusion list:
 
 		sudo rsync_tmbackup.sh -s /home -d /mnt/backup_drive -e excluded_patterns.txt
+
+* Dry-run of above example:
+
+		sudo rsync_tmbackup.sh -s /home -d /mnt/backup_drive -e excluded_patterns.txt -x
 
 ## Exclude file
 
