@@ -113,7 +113,7 @@ SSH_DEST_FOLDER=""
 SSH_CMD=""
 SSH_FOLDER_PREFIX=""
 
-args=`getopt s:d:e: $*`
+args=`getopt s:d:e:x $*`
 if [ $? != 0 ]
 then
     echo "Usage: '$APPNAME -s <SOURCE> -d <DESTINATION> -e <EXCLUSION>'"
@@ -133,10 +133,14 @@ do
     -e)
         fn_run_cmd "echo $APPNAME: EXCLUSION_FILE arg is '$2'"; EXCLUSION_FILE="$2"; shift;
         shift;;
+    -x)
+        fn_run_cmd "echo $APPNAME: DRY-RUN option set"; DRY_RUN=true; shift;
+        shift;;
     --)
         shift; break;;
 esac
 done
+
 
 ## SRC_FOLDER="${1%/}"
 ## DEST_FOLDER="${2%/}"
@@ -327,6 +331,9 @@ while : ; do
     CMD="rsync"
     if [ -n "$SSH_CMD" ]; then
         CMD="$CMD  -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+    fi
+    if [ $DRY_RUN ]; then
+        CMD="$CMD --dry-run"
     fi
     CMD="$CMD --compress"
     CMD="$CMD --numeric-ids"
