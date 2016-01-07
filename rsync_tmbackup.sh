@@ -113,7 +113,7 @@ SSH_FOLDER_PREFIX=""
 args=`getopt s:d:e: $*`
 if [ $? != 0 ]
 then
-    fn_run_cmd "echo Usage: $APPNAME: -s <SOURCE> -d <DESTINATION> -e <EXCLUSION>"
+    echo "Usage: '$APPNAME -s <SOURCE> -d <DESTINATION> -e <EXCLUSION>'"
     exit 2
 fi
 set -- $args
@@ -139,7 +139,7 @@ done
 ## DEST_FOLDER="${2%/}"
 ## EXCLUSION_FILE="$3"
 
-if [ -z "$3" ]; then
+if [ -z "$EXCLUSION_FILE" ]; then
     # A directory under each source entitled '.sync' could contain an 
     # 'IgnoreList', which could allow for tighter control over what
     # gets excluded from each sync, instead of limiting the use of one
