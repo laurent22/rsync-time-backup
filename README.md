@@ -2,28 +2,31 @@
 
 This script offers Time Machine-style backup using rsync. It creates incremental backups of files and directories to the destination of your choice. The backups are structured in a way that makes it easy to recover any file at any point in time.
 
-It should work on Linux, OS X and Windows with Cygwin. The main advantage over Time Machine is the flexibility as it can backup from/to any filesystem and works on any platform. You can also backup, for example, to a Truecrypt drive without any problem.
+It should work on Linux, OS X and Windows with Cygwin. The main advantage over Time Machine is the flexibility as it can backup from/to any filesystem and works on any platform.
 
-On OS X, it has a few disadvantages compared to Time Machine - in particular it doesn't auto-start when the backup drive is plugged (though it can be achieved using a launch agent), it requires some knowledge of the command line, and no specific GUI is provided to restore files. Instead files can be restored by using any file explorer, including Finder, or the command line.
+On OS X, it has a few disadvantages compared to Time Machine - in particular it doesn't auto-start when the backup drive is plugged (though it can be achieved using a launch agent), it requires some knowledge of the command line, and no specific GUI is provided to restore files. Instead files can be restored by using Finder, or the command line.
+
+##NOTES:
+1. I have forked this from https://github.com/laurent22/rsync-time-backup.git
 
 # Installation
 
-	git clone https://github.com/laurent22/rsync-time-backup
+	git clone https://github.com/JohnKaul/rsync-time-backup.git
 
 # Usage
 
 	rsync_tmbackup.sh -s <source> -d <destination> -e <excluded-pattern-file>
 
 ## Examples
-	
+
 * Backup the home folder to backup_drive
-	
-		rsync_tmbackup.sh -s /home -d /mnt/backup_drive  
+
+		rsync_tmbackup.sh -s /home -d /mnt/backup_drive
 
 * Backup with exclusion list:
-	
+
 		rsync_tmbackup.sh -s /home -d /mnt/backup_drive -e excluded_patterns.txt
-	
+
 ## Exclude file
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
@@ -51,6 +54,14 @@ An optional exclude file can be provided as a third parameter. It should be comp
 * Check source and destination file-system. If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2.
 
 * Minor changes (see TODO comments in the source).
+
+# CHANGELOG
+
+* Added root only operation.
+
+* Added the use of `getopt' so argument flags can be used.
+
+* Added the ability to handle a default exclustion list found in a `.sync\IgnoreList` in the source directory.
 
 # LICENSE
 
