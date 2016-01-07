@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# make sure we're running as root
+if (( `/usr/bin/id -u` != 0 )); then { $ECHO "Sorry, must be root.  Exiting..."; exit 1; } fi
+
 APPNAME=$(basename $0 | sed "s/\.sh$//")
 
 # -----------------------------------------------------------------------------
