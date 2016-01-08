@@ -41,6 +41,8 @@ The arguments can be given in any order
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
+A sample exclude file has also been added to this project for you to use in your backups. Please, read through this sample file and remove/add the entries you wish. A section header entitled `local stuff` has purposely been added the bottom of this `sample-exclude-file` so that you can use a simple `echo <ADDITION> >> sample-exclude-file` command from the command line. 
+
 # Features
 
 * Each backup is on its own folder named after the current timestamp. Files can be copied and restored directly, without any intermediate tool.
