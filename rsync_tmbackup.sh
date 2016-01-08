@@ -126,13 +126,13 @@ do
     case "$i"
         in
         -s)
-        fn_run_cmd "echo $APPNAME: SRC_FOLDER arg is '$2/'"; SRC_FOLDER="${2%/}"; shift;
+        SRC_FOLDER="${2%/}"; shift;
         shift;;
     -d)
-        fn_run_cmd "echo $APPNAME: DEST_FOLDER arg is '$2/'"; DEST_FOLDER="${2%/}"; shift;
+        DEST_FOLDER="${2%/}"; shift;
         shift;;
     -e)
-        fn_run_cmd "echo $APPNAME: EXCLUSION_FILE arg is '$2'"; EXCLUSION_FILE="$2"; shift;
+        EXCLUSION_FILE="$2"; shift;
         shift;;
     -x)
         fn_run_cmd "echo $APPNAME: DRY-RUN option set"; DRY_RUN=true; shift;
