@@ -37,11 +37,24 @@ The arguments can be given in any order
 
 		sudo rsync_tmbackup.sh -s /home -d /mnt/backup_drive -e excluded_patterns.txt -x
 
-## Exclude file
+## Excludes
 
-An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+An exclude file can be provided as a parameter with the `-e` flag. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
 A sample exclude file has also been added to this project for you to use in your backups. Please, read through this sample file and remove/add the entries you wish. A section header entitled `local stuff` has purposely been added the bottom of this `sample-exclude-file` so that you can use a simple `echo <ADDITION> >> sample-exclude-file` command from the command line. 
+
+A simple pattern can also be provided as a parameter with the `-e` flag. This is useful when a separate file isn't needed.
+
+If no exclude parameter is given at all, the script looks for a specific file called `IgnoreList` which resides in a `.sync` folder in your `source` directory. This will allow you to use a regularly updated excludes file for your backups, a file that is hidden from day-to-day use of the `source` folder. The diagram below will help show the folder structure:
+
+                SRC_FOLDER
+                    |
+                    + .sync
+                    |    |
+                    |    + Ignorelist
+                    + file
+                    |
+                    + file...
 
 # Features
 
@@ -55,7 +68,7 @@ A sample exclude file has also been added to this project for you to use in your
 
 * Resume feature - if a backup has failed or was interrupted, the tool will resume from there on the next backup.
 
-* Exclude file - support for pattern-based exclusion via the `--exclude-from` rsync parameter.
+* Excludes - support for pattern-based exclusion via the `--exclude-from` and `--exclude` rsync parameters.
 
 * Automatically purge old backups - within 24 hours, all backups are kept. Within one month, the most recent backup for each day is kept. For all previous backups, the most recent of each month is kept.
 
