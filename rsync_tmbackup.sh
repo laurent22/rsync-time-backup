@@ -384,10 +384,9 @@ while : ; do
     # Check if we ran out of space
     # -----------------------------------------------------------------------------
 
-    # TODO: find better way to check for out of space condition without parsing log.
-    NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
+    DISKSPACE=`df -H $DEST_FOLDER | sed '1d' | awk '{print $5}' | cut -d'%' -f1`
 
-    if [ -n "$NO_SPACE_LEFT" ]; then
+    if (( ${DISKSPACE} > 90 )); then
         fn_log_warn "No space left on device - removing oldest backup and resuming."
 
         if [[ "$(fn_find_backups | wc -l)" -lt "2" ]]; then
