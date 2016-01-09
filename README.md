@@ -2,31 +2,59 @@
 
 This script offers Time Machine-style backup using rsync. It creates incremental backups of files and directories to the destination of your choice. The backups are structured in a way that makes it easy to recover any file at any point in time.
 
-It should work on Linux, OS X and Windows with Cygwin. The main advantage over Time Machine is the flexibility as it can backup from/to any filesystem and works on any platform. You can also backup, for example, to a Truecrypt drive without any problem.
+It should work on Linux, OS X and Windows with Cygwin. The main advantage over Time Machine is the flexibility as it can backup from/to any filesystem and works on any platform.
 
-On OS X, it has a few disadvantages compared to Time Machine - in particular it doesn't auto-start when the backup drive is plugged (though it can be achieved using a launch agent), it requires some knowledge of the command line, and no specific GUI is provided to restore files. Instead files can be restored by using any file explorer, including Finder, or the command line.
+On OS X, it has a few disadvantages compared to Time Machine - in particular it doesn't auto-start when the backup drive is plugged (though it can be achieved using a launch agent), it requires some knowledge of the command line, and no specific GUI is provided to restore files. Instead files can be restored by using Finder, or the command line.
+
+##NOTES:
+1. I have forked this from https://github.com/laurent22/rsync-time-backup.git
 
 # Installation
 
-	git clone https://github.com/laurent22/rsync-time-backup
+	git clone https://github.com/JohnKaul/rsync-time-backup.git
 
 # Usage
 
-	rsync_tmbackup.sh <source> <destination> [excluded-pattern-path]
+	sudo rsync_tmbackup.sh -s <source> -d <destination> -e <excluded-pattern-file>
+
+## Argument Flags
+The arguments can be given in any order 
+* -s    The source location.
+* -d    The desination location
+* -x    Designates a dry-run should be made (no actual folders created, backup made, or links updated).
 
 ## Examples
-	
-* Backup the home folder to backup_drive
-	
-		rsync_tmbackup.sh /home /mnt/backup_drive  
 
-* Backup with exclusion list:
-	
-		rsync_tmbackup.sh /home /mnt/backup_drive excluded_patterns.txt
-	
-## Exclude file
+* Backup the `home` folder to `backup_drive`
 
-An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+		sudo rsync_tmbackup.sh -s /home -d /mnt/backup_drive
+
+* Same as above but with exclusion list:
+
+		sudo rsync_tmbackup.sh -s /home -d /mnt/backup_drive -e excluded_patterns.txt
+
+* Dry-run of above example:
+
+		sudo rsync_tmbackup.sh -s /home -d /mnt/backup_drive -e excluded_patterns.txt -x
+
+## Excludes
+
+An exclude file can be provided as a parameter with the `-e` flag. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+
+A sample exclude file has also been added to this project for you to use in your backups. Please, read through this sample file and remove/add the entries you wish. A section header entitled `local stuff` has purposely been added the bottom of this `sample-exclude-file` so that you can use a simple `echo <ADDITION> >> sample-exclude-file` command from the command line. 
+
+A simple pattern can also be provided as a parameter with the `-e` flag. This is useful when a separate file isn't needed.
+
+If no exclude parameter is given at all, the script looks for a specific file called `IgnoreList` which resides in a `.sync` folder in your `source` directory. This will allow you to use a regularly updated excludes file for your backups, a file that is hidden from day-to-day use of the `source` folder. The diagram below will help show the folder structure:
+
+                SRC_FOLDER
+                    |
+                    + .sync
+                    |    |
+                    |    + Ignorelist
+                    + file
+                    |
+                    + file...
 
 # Features
 
@@ -40,7 +68,7 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 * Resume feature - if a backup has failed or was interrupted, the tool will resume from there on the next backup.
 
-* Exclude file - support for pattern-based exclusion via the `--exclude-from` rsync parameter.
+* Excludes - support for pattern-based exclusion via the `--exclude-from` and `--exclude` rsync parameters.
 
 * Automatically purge old backups - within 24 hours, all backups are kept. Within one month, the most recent backup for each day is kept. For all previous backups, the most recent of each month is kept.
 
@@ -51,6 +79,14 @@ An optional exclude file can be provided as a third parameter. It should be comp
 * Check source and destination file-system. If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2.
 
 * Minor changes (see TODO comments in the source).
+
+# CHANGELOG
+
+* Added root only operation.
+
+* Added the use of `getopt' so argument flags can be used.
+
+* Added the ability to handle a default exclustion list found in a `.sync\IgnoreList` in the source directory.
 
 # LICENSE
 

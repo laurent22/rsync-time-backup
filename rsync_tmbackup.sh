@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
+# make sure we're running as root
+if (( `/usr/bin/id -u` != 0 )); then { $ECHO "Sorry, must be root.  Exiting..."; exit 1; } fi
+
 APPNAME=$(basename $0 | sed "s/\.sh$//")
+DRY_RUN=false
 
 # -----------------------------------------------------------------------------
 # Log functions
@@ -110,9 +114,63 @@ SSH_DEST_FOLDER=""
 SSH_CMD=""
 SSH_FOLDER_PREFIX=""
 
-SRC_FOLDER="${1%/}"
-DEST_FOLDER="${2%/}"
-EXCLUSION_FILE="$3"
+args=`getopt s:d:e:x $*`
+if [ $? != 0 ]
+then
+    echo "Usage: '$APPNAME -s <SOURCE> -d <DESTINATION> -e <EXCLUSION>'"
+    exit 2
+fi
+set -- $args
+for i
+do
+    case "$i"
+        in
+        -s)
+        SRC_FOLDER="${2%/}"; shift;
+        shift;;
+    -d)
+        DEST_FOLDER="${2%/}"; shift;
+        shift;;
+    -e)
+        EXCLUSION_FILE="$2"; shift;
+        shift;;
+    -x)
+        fn_run_cmd "echo $APPNAME: DRY-RUN option set"; DRY_RUN=true; shift;
+        shift;;
+    --)
+        shift; break;;
+esac
+done
+
+
+## SRC_FOLDER="${1%/}"
+## DEST_FOLDER="${2%/}"
+## EXCLUSION_FILE="$3"
+
+if [ -z "$EXCLUSION_FILE" ]; then
+    # A directory under each source entitled '.sync' could contain an 
+    # 'IgnoreList', which could allow for tighter control over what
+    # gets excluded from each sync, instead of limiting the use of one
+    # master exclusion_list or calling the use of an exclusion_list
+    # each time. -i.e. possible small feature add.
+    # EX:
+    #           SRC_FOLDER
+    #               |
+    #               + .sync
+    #               |    |
+    #               |    + Ignorelist
+    #               + file
+    #               |
+    #               + file...
+    if [ -f "$SRC_FOLDER/.sync/IgnoreList" ]; then
+        # if both the #3 parameter (exclusion_file) and the
+        # 'ignorelist' file exists, prompt the end user and set the
+        # variable.
+        fn_run_cmd "echo $APPNAME: EXCLUSION_FILE parameter missing. Assuming $SRC_FOLDER/.sync/IgnoreList usage."
+        EXCLUSION_FILE="$SRC_FOLDER/.sync/IgnoreList"
+    fi
+    # ...else leave variable blank.
+fi
 
 fn_parse_ssh
 
@@ -226,66 +284,90 @@ while : ; do
     # Create destination folder if it doesn't already exists
     # -----------------------------------------------------------------------------
 
-    if [ -z "$(fn_find "$DEST -type d" 2>/dev/null)" ]; then
-        fn_log_info "Creating destination $SSH_FOLDER_PREFIX$DEST"
-        fn_mkdir "$DEST"
+    if [ $DRY_RUN != true ]; then
+        if [ -z "$(fn_find "$DEST -type d" 2>/dev/null)" ]; then
+            fn_log_info "Creating destination $SSH_FOLDER_PREFIX$DEST"
+            fn_mkdir "$DEST"
+        fi
     fi
 
     # -----------------------------------------------------------------------------
     # Purge certain old backups before beginning new backup.
     # -----------------------------------------------------------------------------
 
-    # Default value for $PREV ensures that the most recent backup is never deleted.
-    PREV="0000-00-00-000000"
-    for FILENAME in $(fn_find_backups | sort -r); do
-        BACKUP_DATE=$(basename "$FILENAME")
-        TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
+    # Default value for $PREV ensures that the most recent backup is
+    # never deleted.
+    if [ $DRY_RUN != true ]; then
+        PREV="0000-00-00-000000"
+        for FILENAME in $(fn_find_backups | sort -r); do
+            BACKUP_DATE=$(basename "$FILENAME")
+            TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
 
-        # Skip if failed to parse date...
-        if [ -z "$TIMESTAMP" ]; then
-            fn_log_warn "Could not parse date: $FILENAME"
-            continue
-        fi
+            # Skip if failed to parse date...
+            if [ -z "$TIMESTAMP" ]; then
+                fn_log_warn "Could not parse date: $FILENAME"
+                continue
+            fi
 
-        if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
-            true
-        elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
-            # Delete all but the most recent of each day.
-            [ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
-        else
-            # Delete all but the most recent of each month.
-            [ "${BACKUP_DATE:0:7}" == "${PREV:0:7}" ] && fn_expire_backup "$FILENAME"
-        fi
+            if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
+                true
+            elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
+                # Delete all but the most recent of each day.
+                [ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
+            else
+                # Delete all but the most recent of each month.
+                [ "${BACKUP_DATE:0:7}" == "${PREV:0:7}" ] && fn_expire_backup "$FILENAME"
+            fi
 
-        PREV=$BACKUP_DATE
-    done
+            PREV=$BACKUP_DATE
+        done
+    fi
 
     # -----------------------------------------------------------------------------
     # Start backup
     # -----------------------------------------------------------------------------
 
-    LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
 
-    fn_log_info "Starting backup..."
-    fn_log_info "From: $SRC_FOLDER"
-    fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST"
+    if [ !$DRY_RUN != true ]; then
+        LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
+
+        fn_log_info "Starting backup..."
+        fn_log_info "From: $SRC_FOLDER"
+        fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST"
+    fi 
 
     CMD="rsync"
     if [ -n "$SSH_CMD" ]; then
         CMD="$CMD  -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
     fi
+    if [ $DRY_RUN == true ]; then
+        CMD="$CMD --dry-run"
+    fi
     CMD="$CMD --compress"
     CMD="$CMD --numeric-ids"
-    CMD="$CMD --links"
-    CMD="$CMD --hard-links"
+    if [ $DRY_RUN != true ]; then
+        CMD="$CMD --links"
+        CMD="$CMD --hard-links"
+    fi
     CMD="$CMD --one-file-system"
     CMD="$CMD --archive"
     CMD="$CMD --itemize-changes"
     CMD="$CMD --verbose"
     CMD="$CMD --log-file '$LOG_FILE'"
     if [ -n "$EXCLUSION_FILE" ]; then
-        # We've already checked that $EXCLUSION_FILE doesn't contain a single quote
-        CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
+        # We've already checked that $EXCLUSION_FILE doesn't contain a
+        # single quote
+        #
+        # If $EXCLUSION_FILE is a file that exists, pass it as a file.
+        # If not, use it as a string exclude.
+        if [ -f "$EXCLUSION_FILE" ]; then
+            CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
+        else 
+            for EXCPATT in $(echo $EXCLUSION_FILE | tr " " "\n")
+            do
+                CMD="$CMD --exclude '$EXCPATT'"
+            done
+        fi
     fi
     CMD="$CMD $LINK_DEST_OPTION"
     CMD="$CMD -- '$SRC_FOLDER/' '$SSH_FOLDER_PREFIX$DEST/'"
@@ -302,10 +384,9 @@ while : ; do
     # Check if we ran out of space
     # -----------------------------------------------------------------------------
 
-    # TODO: find better way to check for out of space condition without parsing log.
-    NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
+    DISKSPACE=`df -H $DEST_FOLDER | sed '1d' | awk '{print $5}' | cut -d'%' -f1`
 
-    if [ -n "$NO_SPACE_LEFT" ]; then
+    if (( ${DISKSPACE} > 90 )); then
         fn_log_warn "No space left on device - removing oldest backup and resuming."
 
         if [[ "$(fn_find_backups | wc -l)" -lt "2" ]]; then
@@ -334,8 +415,11 @@ while : ; do
     # Add symlink to last successful backup
     # -----------------------------------------------------------------------------
 
-    fn_rm "$DEST_FOLDER/latest"
-    fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+
+    if [ $DRY_RUN != true ]; then
+        fn_rm "$DEST_FOLDER/latest"
+        fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+    fi
 
     fn_rm "$INPROGRESS_FILE"
     rm -f -- "$LOG_FILE"

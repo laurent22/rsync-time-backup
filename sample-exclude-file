@@ -1,0 +1,81 @@
+# Vim stuff
+##############################
+*.s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+# OS generated files
+##############################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# C++ objects and libs
+##############################
+*.slo
+*.lo
+*.o
+*.a
+*.la
+*.lai
+*.dylib
+
+# Qt
+##############################
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+qrc_*.cpp
+*-build-*
+
+# CMake
+###############################
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+
+# LaTeX
+###############################
+*.acn
+*.acr
+*.alg
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.fdb_latexmk
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.log
+*.lot
+*.maf
+*.mtc
+*.mtc0
+*.nav
+*.nlo
+*.out
+*.pdfsync
+*.ps
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdy
+*.tdo
+
+# Local stuff
+# This section is devoted to this 
+# direcotry and sub directories
+##############################
