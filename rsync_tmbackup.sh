@@ -32,7 +32,7 @@ trap 'fn_terminate_script' SIGINT
 # Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 fn_display_usage() {
-	fn_log_info "Usage : $(basename $0) <source> [[[user@host:]destination] exclude-pattern-file]"
+	fn_log_info "Usage : $(basename $0) <source> <[user@host:]destination> [exclude-pattern-file]"
 }
 
 fn_parse_date() {
@@ -114,18 +114,12 @@ SSH_CMD=""
 SSH_FOLDER_PREFIX=""
 
 #display usage information if required arguments are not passed
-if [[ "${#@}" -lt 1 ]]; then
+if [[ "${#@}" -lt 2 ]]; then
 	fn_display_usage
 	exit 1
 fi
 SRC_FOLDER="${1%/}"
-
-#if destination folder is not specified assume current folder
-if [ -z ${2} ]; then
-	DEST_FOLDER="."
-else
-	DEST_FOLDER="${2%/}"
-fi
+DEST_FOLDER="${2%/}"
 EXCLUSION_FILE="$3"
 
 fn_parse_ssh
