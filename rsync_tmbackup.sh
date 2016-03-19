@@ -191,7 +191,7 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 		fn_log_warn "Cygwin only: Previous backup task has either been interrupted or it might still be active, but there is currently no check for this. Assuming that the task was simply interrupted."
 	else 
 	    RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
-	    if [ "$RUNNINGPID"="$(pgrep "$APPNAME")" ]; then
+	    if [ "$RUNNINGPID" = "$(pgrep "$APPNAME")" ]; then
 	        fn_log_error "Previous backup task is still active - aborting."
 	        exit 1
 	    fi
