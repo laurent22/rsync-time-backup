@@ -19,9 +19,9 @@ On OS X, it has a few disadvantages compared to Time Machine - in particular it 
 
 ## Argument Flags
 The arguments can be given in any order 
-* -s    The source location.
-* -d    The desination location
-* -x    Designates a dry-run should be made (no actual folders created, backup made, or links updated).
+* -s|--source           The source location.
+* -d|--destination      The desination location
+* -x|--dry-run          Designates a dry-run should be made (no actual folders created, backup made, or links updated).
 
 ## Examples
 
