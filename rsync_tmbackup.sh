@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # make sure we're running as root
-if (( `/usr/bin/id -u` != 0 )); then { $ECHO "Sorry, must be root.  Exiting..."; exit 1; } fi
+if (( `/usr/bin/id -u` != 0 )); then { echo "Sorry, must be root.  Exiting..."; exit 1; } fi
 
 APPNAME=$(basename $0 | sed "s/\.sh$//")
 DRY_RUN=false
@@ -105,6 +105,24 @@ fn_ln() {
     fn_run_cmd "ln -vs -- $1 $2"
 }
 
+fn_show_help() {
+    echo "Usage: '$APPNAME -s <SOURCE> -d <DESTINATION> -e <EXCLUSION>'"
+    echo ""
+    echo "      -s              :       Source folder"
+    echo "      --source"
+    echo "      -d              :       Destination folder"
+    echo "      --destination"
+    echo "      -e              :       Exclusions or exclustion list"
+    echo "      --exclusion"
+    echo ""
+    echo " NOTES:"
+    echo "      o  It is permitted to pass arguments in any order."
+    echo "      o  It is permitted to use short or long versions of flags."
+    echo "      o  It is permitted to use an '=' seperating flag and path."
+    echo "         EX: --source=~\\my-backup-source\\"
+}
+
+
 # -----------------------------------------------------------------------------
 # Source and destination information
 # -----------------------------------------------------------------------------
@@ -114,41 +132,83 @@ SSH_DEST_FOLDER=""
 SSH_CMD=""
 SSH_FOLDER_PREFIX=""
 
-args=`getopt s:d:e:x $*`
-if [ $? != 0 ]
-then
-    echo "Usage: '$APPNAME -s <SOURCE> -d <DESTINATION> -e <EXCLUSION>'"
-    exit 2
-fi
-set -- $args
-for i
-do
-    case "$i"
-        in
-        -s)
-        SRC_FOLDER="${2%/}"; shift;
-        shift;;
-    -d)
-        DEST_FOLDER="${2%/}"; shift;
-        shift;;
-    -e)
-        EXCLUSION_FILE="$2"; shift;
-        shift;;
-    -x)
-        fn_run_cmd "echo $APPNAME: DRY-RUN option set"; DRY_RUN=true; shift;
-        shift;;
-    --)
-        shift; break;;
-esac
+while :; do
+    case $1 in
+        -h|-\?|--help)          # Call a "show_help" function to display a synopsis, then exit.
+            fn_show_help
+            exit
+            ;;
+        -s|--source)            # Takes an option argument, ensuring it has been specified.
+            if [ -n "$2" ]; then
+                SRC_FOLDER=$2
+                shift
+            else
+                printf 'ERROR: "--source" requires a non-empty option argument.\n' >&2
+                exit 1
+            fi
+            ;;
+        --source=?*)
+            SRC_FOLDER=${1#*=}  # Delete everything up to "=" and assign the remainder.
+            ;;
+        --source=)              # Handle the case of an empty --source=
+            printf 'ERROR: "--source" requires a non-empty option argument.\n' >&2
+            exit 1
+            ;;
+        -d|--destination)       # Takes an option argument, ensuring it has been specified.
+            if [ -n "$2" ]; then
+                DEST_FOLDER=$2
+                shift
+            else
+                printf 'ERROR: "--destination" requires a non-empty option argument.\n' >&2
+                exit 1
+            fi
+            ;;
+        --destination=?*)
+            DEST_FOLDER=${1#*=} # Delete everything up to "=" and assign the remainder.
+            ;;
+        --destination=)         # Handle the case of an empty --destination=
+            printf 'ERROR: "--destination" requires a non-empty option argument.\n' >&2
+            exit 1
+            ;;
+        -e|--exclusion)
+            EXCLUSION_FILE="$2";
+            ;;
+        --exclusion=?*)
+            DEST_FOLDER=${1#*=} # Delete everything up to "=" and assign the remainder.
+            ;;
+        --exclusion=)           # Handle the case of an empty --destination=
+            printf 'ERROR: "--destination" requires a non-empty option argument.\n' >&2
+            exit 1
+            ;;
+        -x|--dry-run)
+            printf 'DRY-RUN option set.\n' >&2
+            DRY_RUN=true
+            ;;
+        --)                     # End of all options.
+            shift
+            break
+            ;;
+        -?*)
+            printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+            ;;
+        *)                      # Default case: If no more options then break out of the loop.
+            if [ "$SRC_FOLDER" == "" ]; then
+                printf 'ERROR: Required argument missing; "--source" requires a non-empty option argument.\n' >&2
+                printf 'For help, issue the following: '$APPNAME' -h\n' >&2
+                exit 1;
+            fi
+            if [ "$DEST_FOLDER" == "" ]; then
+                printf 'ERROR: Required argument missing; "--destination" requires a non-empty option argument.\n' >&2
+                printf 'For help, issue the following: '$APPNAME' -h\n' >&2
+                exit 1;
+            fi
+            break
+    esac
+    shift
 done
 
-
-## SRC_FOLDER="${1%/}"
-## DEST_FOLDER="${2%/}"
-## EXCLUSION_FILE="$3"
-
 if [ -z "$EXCLUSION_FILE" ]; then
-    # A directory under each source entitled '.sync' could contain an 
+    # A directory under each source entitled '.sync' could contain an
     # 'IgnoreList', which could allow for tighter control over what
     # gets excluded from each sync, instead of limiting the use of one
     # master exclusion_list or calling the use of an exclusion_list
@@ -239,9 +299,9 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 		# TODO: so the pgrep solution below won't work. Need to use "procps -wwFAH", grep
 		# TODO: the script name, and extract the process ID from it.
 		fn_log_warn "Cygwin only: Previous backup task has either been interrupted or it might still be active, but there is currently no check for this. Assuming that the task was simply interrupted."
-	else 
+	else
 	    RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
-	    if [ "$RUNNINGPID"="$(pgrep "$APPNAME")" ]; then
+	    if [ "$RUNNINGPID" = "$(pgrep "$APPNAME")" ]; then
 	        fn_log_error "Previous backup task is still active - aborting."
 	        exit 1
 	    fi
@@ -334,7 +394,7 @@ while : ; do
         fn_log_info "Starting backup..."
         fn_log_info "From: $SRC_FOLDER"
         fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST"
-    fi 
+    fi
 
     CMD="rsync"
     if [ -n "$SSH_CMD" ]; then
@@ -362,7 +422,7 @@ while : ; do
         # If not, use it as a string exclude.
         if [ -f "$EXCLUSION_FILE" ]; then
             CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
-        else 
+        else
             for EXCPATT in $(echo $EXCLUSION_FILE | tr " " "\n")
             do
                 CMD="$CMD --exclude '$EXCPATT'"
