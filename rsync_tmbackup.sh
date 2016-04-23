@@ -108,11 +108,12 @@ fn_ln() {
 fn_show_help() {
     echo "Usage: '$APPNAME -s <SOURCE> -d <DESTINATION> -e <EXCLUSION>'"
     echo ""
+    echo "ARGUMENTS:"
     echo "      -s              :       Source folder"
     echo "      --source"
     echo "      -d              :       Destination folder"
     echo "      --destination"
-    echo "      -e              :       Exclusions or exclustion list"
+    echo "      -e              :       Exclusion or exclustion list"
     echo "      --exclusion"
     echo ""
     echo " NOTES:"
@@ -143,7 +144,7 @@ while :; do
                 SRC_FOLDER=$2
                 shift
             else
-                printf 'ERROR: "--source" requires a non-empty option argument.\n' >&2
+                echo "ERROR: '--source' requires a non-empty option argument."
                 exit 1
             fi
             ;;
@@ -151,7 +152,7 @@ while :; do
             SRC_FOLDER=${1#*=}  # Delete everything up to "=" and assign the remainder.
             ;;
         --source=)              # Handle the case of an empty --source=
-            printf 'ERROR: "--source" requires a non-empty option argument.\n' >&2
+            echo "ERROR: '--source' requires a non-empty option argument."
             exit 1
             ;;
         -d|--destination)       # Takes an option argument, ensuring it has been specified.
@@ -159,7 +160,7 @@ while :; do
                 DEST_FOLDER=$2
                 shift
             else
-                printf 'ERROR: "--destination" requires a non-empty option argument.\n' >&2
+                echo "ERROR: '--destination' requires a non-empty option argument."
                 exit 1
             fi
             ;;
@@ -167,7 +168,7 @@ while :; do
             DEST_FOLDER=${1#*=} # Delete everything up to "=" and assign the remainder.
             ;;
         --destination=)         # Handle the case of an empty --destination=
-            printf 'ERROR: "--destination" requires a non-empty option argument.\n' >&2
+            echo "ERROR: '--destination' requires a non-empty option argument."
             exit 1
             ;;
         -e|--exclusion)
@@ -176,12 +177,12 @@ while :; do
         --exclusion=?*)
             DEST_FOLDER=${1#*=} # Delete everything up to "=" and assign the remainder.
             ;;
-        --exclusion=)           # Handle the case of an empty --destination=
-            printf 'ERROR: "--destination" requires a non-empty option argument.\n' >&2
+        --exclusion=)           # Handle the case of an empty --exclusion= 
+            echo "ERROR: '--exclusion' requires a non-empty option argument."
             exit 1
             ;;
         -x|--dry-run)
-            printf 'DRY-RUN option set.\n' >&2
+            echo "DRY-RUN option set."
             DRY_RUN=true
             ;;
         --)                     # End of all options.
@@ -189,17 +190,17 @@ while :; do
             break
             ;;
         -?*)
-            printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+            echo "WARN: Unknown option (ignored): '$1'"
             ;;
         *)                      # Default case: If no more options then break out of the loop.
             if [ "$SRC_FOLDER" == "" ]; then
-                printf 'ERROR: Required argument missing; "--source" requires a non-empty option argument.\n' >&2
-                printf 'For help, issue the following: '$APPNAME' -h\n' >&2
+                echo "ERROR: Required argument missing; '--source' requires a non-empty option argument."
+                echo "For help, issue the following: '$APPNAME' -h'"
                 exit 1;
             fi
             if [ "$DEST_FOLDER" == "" ]; then
-                printf 'ERROR: Required argument missing; "--destination" requires a non-empty option argument.\n' >&2
-                printf 'For help, issue the following: '$APPNAME' -h\n' >&2
+                echo "ERROR: Required argument missing; '--destination' requires a non-empty option argument."
+                echo "HELP: For help, issue the following: '$APPNAME' -h'"
                 exit 1;
             fi
             break
