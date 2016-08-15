@@ -33,6 +33,9 @@ trap 'fn_terminate_script' SIGINT
 # -----------------------------------------------------------------------------
 fn_display_usage() {
 	fn_log_info "Usage : $(basename $0) [args] <source> <[user@host:]destination> [exclude-pattern-file]"
+	fn_log_info ""
+	fn_log_info "Options:"
+	fn_log_info "-p, --port     SSH port"
 }
 
 fn_parse_date() {
@@ -66,7 +69,7 @@ fn_parse_ssh() {
 		SSH_USER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
 		SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
 		SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
-		SSH_CMD="ssh ${SSH_USER}@${SSH_HOST}"
+		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		SSH_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
 	fi
 }
@@ -112,6 +115,7 @@ SSH_HOST=""
 SSH_DEST_FOLDER=""
 SSH_CMD=""
 SSH_FOLDER_PREFIX=""
+SSH_PORT="22"
 
 SRC_FOLDER=""
 DEST_FOLDER=""
@@ -122,6 +126,10 @@ while :; do
 		-h|-\?|--help)
 			fn_display_usage
 			exit
+			;;
+		-p|--port)
+			shift
+			SSH_PORT=$1
 			;;
 		--)
 			shift
@@ -310,7 +318,7 @@ while : ; do
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
-		CMD="$CMD  -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+		CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 	fi
 	CMD="$CMD --compress"
 	CMD="$CMD --numeric-ids"
