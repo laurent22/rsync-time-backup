@@ -32,7 +32,7 @@ trap 'fn_terminate_script' SIGINT
 # Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 fn_display_usage() {
-	fn_log_info "Usage : $(basename $0) <source> <[user@host:]destination> [exclude-pattern-file]"
+	fn_log_info "Usage : $(basename $0) [args] <source> <[user@host:]destination> [exclude-pattern-file]"
 }
 
 fn_parse_date() {
@@ -113,14 +113,44 @@ SSH_DEST_FOLDER=""
 SSH_CMD=""
 SSH_FOLDER_PREFIX=""
 
-# display usage information if required arguments are not passed
-if [[ "${#@}" -lt 2 ]]; then
+SRC_FOLDER=""
+DEST_FOLDER=""
+EXCLUSION_FILE=""
+
+while :; do
+	case $1 in
+		-h|-\?|--help)
+			fn_display_usage
+			exit
+			;;
+		--)
+			shift
+			SRC_FOLDER="${1%/}"
+			DEST_FOLDER="${2%/}"
+			EXCLUSION_FILE="$3"
+			break
+			;;
+		-?*)
+			fn_log_error "Unknown option: \"$1\""
+			fn_log_info ""
+			fn_display_usage
+			exit 1
+			;;
+		*)
+			SRC_FOLDER="${1%/}"
+			DEST_FOLDER="${2%/}"
+			EXCLUSION_FILE="$3"
+			break
+	esac
+
+	shift
+done
+
+# Display usage information if required arguments are not passed
+if [[ -z "$SRC_FOLDER" || -z "$DEST_FOLDER" ]]; then
 	fn_display_usage
 	exit 1
 fi
-SRC_FOLDER="${1%/}"
-DEST_FOLDER="${2%/}"
-EXCLUSION_FILE="$3"
 
 fn_parse_ssh
 
@@ -129,8 +159,8 @@ if [ -n "$SSH_DEST_FOLDER" ]; then
 fi
 
 for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
-if [[ "$ARG" == *"'"* ]]; then
-		fn_log_error 'Arguments may not have any single quote characters.'
+	if [[ "$ARG" == *"'"* ]]; then
+		fn_log_error 'Source and destination directories may not contain single quote characters.'
 		exit 1
 	fi
 done
