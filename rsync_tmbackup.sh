@@ -36,6 +36,7 @@ fn_display_usage() {
 	fn_log_info ""
 	fn_log_info "Options:"
 	fn_log_info "-p, --port     SSH port"
+	fn_log_info "-h, --help     Display this help message"
 }
 
 fn_parse_date() {
