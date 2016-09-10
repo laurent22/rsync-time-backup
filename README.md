@@ -36,6 +36,12 @@ On OS X, it has a few disadvantages compared to Time Machine - in particular it 
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
+## Rsync options
+
+To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. It is also possible to add or remove options using the `--rsync-set-flags` option. For example, to exclude backing up permissions and groups:
+
+	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links --one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
+
 # Features
 
 * Each backup is on its own folder named after the current timestamp. Files can be copied and restored directly, without any intermediate tool.
