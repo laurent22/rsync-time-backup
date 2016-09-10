@@ -32,11 +32,13 @@ trap 'fn_terminate_script' SIGINT
 # Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 fn_display_usage() {
-	fn_log_info "Usage : $(basename $0) [args] <source> <[user@host:]destination> [exclude-pattern-file]"
-	fn_log_info ""
-	fn_log_info "Options:"
-	fn_log_info "-p, --port     SSH port"
-	fn_log_info "-h, --help     Display this help message"
+	echo "Usage: $(basename $0) [OPTION]... <SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]"
+	echo ""
+	echo "Options"
+	echo " -p, --port           SSH port."
+	echo " -h, --help           Display this help message."
+	echo " --rsync-get-flags    Display the default rsync flags that are used for backup."
+	echo " --rsync-set-flags    Set the rsync flags that are going to be used for backup."
 }
 
 fn_parse_date() {
@@ -122,6 +124,8 @@ SRC_FOLDER=""
 DEST_FOLDER=""
 EXCLUSION_FILE=""
 
+RSYNC_FLAGS="--compress --numeric-ids --links --hard-links --one-file-system --archive --itemize-changes --verbose"
+
 while :; do
 	case $1 in
 		-h|-\?|--help)
@@ -131,6 +135,15 @@ while :; do
 		-p|--port)
 			shift
 			SSH_PORT=$1
+			;;
+		--rsync-get-flags)
+			shift
+			echo $RSYNC_FLAGS
+			exit
+			;;
+		--rsync-set-flags)
+			shift
+			RSYNC_FLAGS="$1"
 			;;
 		--)
 			shift
@@ -321,14 +334,7 @@ while : ; do
 	if [ -n "$SSH_CMD" ]; then
 		CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 	fi
-	CMD="$CMD --compress"
-	CMD="$CMD --numeric-ids"
-	CMD="$CMD --links"
-	CMD="$CMD --hard-links"
-	CMD="$CMD --one-file-system"
-	CMD="$CMD --archive"
-	CMD="$CMD --itemize-changes"
-	CMD="$CMD --verbose"
+	CMD="$CMD $RSYNC_FLAGS"
 	CMD="$CMD --log-file '$LOG_FILE'"
 	if [ -n "$EXCLUSION_FILE" ]; then
 		# We've already checked that $EXCLUSION_FILE doesn't contain a single quote
