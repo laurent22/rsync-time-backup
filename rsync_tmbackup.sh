@@ -87,27 +87,27 @@ fn_run_cmd() {
 }
 
 fn_find() {
-	fn_run_cmd "find $1"  2>/dev/null
+	fn_run_cmd "find '$1'"  2>/dev/null
 }
 
 fn_get_absolute_path() {
-	fn_run_cmd "cd $1;pwd"
+	fn_run_cmd "cd '$1';pwd"
 }
 
 fn_mkdir() {
-	fn_run_cmd "mkdir -p -- $1"
+	fn_run_cmd "mkdir -p -- '$1'"
 }
 
 fn_rm() {
-	fn_run_cmd "rm -rf -- $1"
+	fn_run_cmd "rm -rf -- '$1'"
 }
 
 fn_touch() {
-	fn_run_cmd "touch -- $1"
+	fn_run_cmd "touch -- '$1'"
 }
 
 fn_ln() {
-	fn_run_cmd "ln -s -- $1 $2"
+	fn_run_cmd "ln -s -- '$1' '$2'"
 }
 
 # -----------------------------------------------------------------------------

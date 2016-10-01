@@ -62,7 +62,8 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 # TODO
 
-* Check source and destination file-system. If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2.
+* Check source and destination file-system (`df -T /dest`). If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2
+* Add `--whole-file` arguments on Windows? See http://superuser.com/a/905415/73619
 
 * Minor changes (see TODO comments in the source).
 
