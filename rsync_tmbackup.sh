@@ -124,7 +124,7 @@ SRC_FOLDER=""
 DEST_FOLDER=""
 EXCLUSION_FILE=""
 
-RSYNC_FLAGS="--compress --numeric-ids --links --hard-links --one-file-system --archive --itemize-changes --verbose"
+RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group"
 
 while :; do
 	case $1 in
