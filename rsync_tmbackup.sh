@@ -47,6 +47,7 @@ fn_parse_date() {
 		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		cygwin*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+		FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
 	esac
 }
 
