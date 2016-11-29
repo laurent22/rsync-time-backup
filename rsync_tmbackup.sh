@@ -148,8 +148,8 @@ while :; do
 			;;
 		--)
 			shift
-			SRC_FOLDER="${1%/}"
-			DEST_FOLDER="${2%/}"
+			SRC_FOLDER="$1"
+			DEST_FOLDER="$2"
 			EXCLUSION_FILE="$3"
 			break
 			;;
@@ -160,8 +160,8 @@ while :; do
 			exit 1
 			;;
 		*)
-			SRC_FOLDER="${1%/}"
-			DEST_FOLDER="${2%/}"
+			SRC_FOLDER="$1"
+			DEST_FOLDER="$2"
 			EXCLUSION_FILE="$3"
 			break
 	esac
@@ -174,6 +174,15 @@ if [[ -z "$SRC_FOLDER" || -z "$DEST_FOLDER" ]]; then
 	fn_display_usage
 	exit 1
 fi
+
+# Strips off last slash. Note that it means the root folder "/"
+# will be represented as an empty string "", which is fine
+# with the current script (since a "/" is added when needed)
+# but still something to keep in mind.
+# Don't think it would with DEST_FOLDER set to "/" though,
+# but there's probably not a use case for this anyway.
+SRC_FOLDER="${SRC_FOLDER%/}"
+DEST_FOLDER="${DEST_FOLDER%/}"
 
 fn_parse_ssh
 
@@ -328,8 +337,8 @@ while : ; do
 	LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
 
 	fn_log_info "Starting backup..."
-	fn_log_info "From: $SRC_FOLDER"
-	fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST"
+	fn_log_info "From: $SRC_FOLDER/"
+	fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST/"
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
