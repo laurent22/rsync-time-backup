@@ -34,7 +34,7 @@ On OS X, it has a few disadvantages compared to Time Machine - in particular it 
 	
 ## Exclude file
 
-An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial](https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
 ## Rsync options
 
@@ -44,7 +44,7 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 ## Lock file
 
-The use of a lock-file is recommended for larger backups. Flock(1) is an easy way to get lock files and can be installed with Homebrew. Please refer to its [GitHub page](https://github.com/discoteq/flock) for more details. To use flock with the script, see this example:
+The use of a lock-file is recommended for larger backups. Flock(1) is an easy way to get lock files and can be installed with Homebrew. Please refer to its GitHub [page](https://github.com/discoteq/flock) for more details. To use flock with the script, see this example:
 
 	flock -n /tmp/rsync.lock sh -c 'sh rsync_tmbackup.sh /home /mnt/backup_drive'
 
