@@ -42,6 +42,12 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links --one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
 
+## Lock file
+
+The use of a lock-file is recommended for larger backups. Flock(1) is an easy way to get lock files and can be installed with Homebrew. Please refer to its [GitHub page](https://github.com/discoteq/flock) for more details. To use flock with the script, see this example:
+
+	flock -n /tmp/rsync.lock sh -c 'sh rsync_tmbackup.sh /home /mnt/backup_drive'
+
 # Features
 
 * Each backup is on its own folder named after the current timestamp. Files can be copied and restored directly, without any intermediate tool.
