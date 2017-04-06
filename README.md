@@ -34,13 +34,19 @@ On OS X, it has a few disadvantages compared to Time Machine - in particular it 
 	
 ## Exclude file
 
-An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial] (https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial](https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
 ## Rsync options
 
 To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. It is also possible to add or remove options using the `--rsync-set-flags` option. For example, to exclude backing up permissions and groups:
 
 	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links --one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
+
+## Lock file
+
+The use of a lock-file is recommended for larger backups. [Flock(1)](https://github.com/discoteq/flock) is an easy way to get lock files and can be installed with Homebrew. Please refer to its GitHub page for more details. To use flock with the script, see this example:
+
+	flock -n /tmp/rsync.lock sh -c 'sh rsync_tmbackup.sh /home /mnt/backup_drive'
 
 # Features
 
