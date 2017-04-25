@@ -18,23 +18,23 @@ On OS X, it has a few disadvantages compared to Time Machine - in particular it 
 	
 * Backup the home folder to backup_drive
 	
-	rsync_tmbackup.sh /home /mnt/backup_drive  
+		rsync_tmbackup.sh /home /mnt/backup_drive  
 
 * Backup with exclusion list:
 	
-	rsync_tmbackup.sh /home /mnt/backup_drive excluded_patterns.txt
+		rsync_tmbackup.sh /home /mnt/backup_drive excluded_patterns.txt
 
 * Backup to remote drive over SSH, on port 2222:
 
-	rsync_tmbackup.sh -p 2222 /home user@example.com:/mnt/backup_drive
+		rsync_tmbackup.sh -p 2222 /home user@example.com:/mnt/backup_drive
 
 * To mimic Time Machine's behaviour, a cron script can be setup to backup at regular interval. For example, the following cron job checks if the drive "/mnt/backup" is currently connected and, if it is, starts the backup. It does this check every 1 hour.
 
-	0 */1 * * * if [[ -d /mnt/backup ]]; then rsync_tmbackup.sh /home /mnt/backup; fi 
+		0 */1 * * * if [[ -d /mnt/backup ]]; then rsync_tmbackup.sh /home /mnt/backup; fi 
 	
 * The use `flock` is recommended so that only one instance of the script runs at a given time:
 
-	flock -n /tmp/rsync_tmbackup.lock rsync_tmbackup.sh /home /mnt/backup
+		flock -n /tmp/rsync_tmbackup.lock rsync_tmbackup.sh /home /mnt/backup
 
 ## Exclude file
 
@@ -44,7 +44,8 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. It is also possible to add or remove options using the `--rsync-set-flags` option. For example, to exclude backing up permissions and groups:
 
-	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links --one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
+	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links \
+	--one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
 
 # Features
 
