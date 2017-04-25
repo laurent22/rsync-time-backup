@@ -100,7 +100,15 @@ fn_mkdir() {
 }
 
 fn_rm() {
-	fn_run_cmd "rm -rf -- '$1'"
+	fn_run_cmd "mkdir  /tmp/rsync-time-backup-emptydir"
+	if   [ -d '$1' ] ; then
+		# when deleting a directory use rsyny for performance reasons
+		fn_run_cmd "rsync -a --delete /tmp/rsync-time-backup-emptydir/ '$1'"
+	elif [ -f '$1' ]; then
+		# when deleting a file use regular rm
+        	fn_run_cmd "rm -f '$1'"
+	fi
+	fn_run_cmd "rm -rf /tmp/rsync-time-backup-emptydir '$1'"
 }
 
 fn_touch() {
