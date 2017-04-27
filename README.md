@@ -32,7 +32,7 @@ On OS X, it has a few disadvantages compared to Time Machine - in particular it 
 
 		0 */1 * * * if [[ -d /mnt/backup ]]; then rsync_tmbackup.sh /home /mnt/backup; fi 
 	
-* The use `flock` is recommended so that only one instance of the script runs at a given time:
+* The use of `flock` is recommended so that only one instance of the script runs at a given time:
 
 		flock -n /tmp/rsync_tmbackup.lock rsync_tmbackup.sh /home /mnt/backup
 
