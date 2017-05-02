@@ -6,11 +6,11 @@ It works on Linux, macOS and Windows (via WSL or Cygwin). The main advantage ove
 
 On macOS, it has a few disadvantages compared to Time Machine - in particular it does not auto-start when the backup drive is plugged (though it can be achieved using a launch agent), it requires some knowledge of the command line, and no specific GUI is provided to restore files. Instead files can be restored by using any file explorer, including Finder, or the command line.
 
-# Installation
+## Installation
 
 	git clone https://github.com/laurent22/rsync-time-backup
 
-# Usage
+## Usage
 
 	Usage: rsync_tmbackup.sh [OPTION]... <SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]
 
@@ -45,7 +45,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 		flock -n /tmp/rsync_tmbackup.lock rsync_tmbackup.sh /home /mnt/backup
 
-# Backup expiration logic
+## Backup expiration logic
 
 The script automatically deletes old backups using the following logic:
 - Within the last 24 hours, all the backups are kept.
@@ -64,7 +64,7 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links \
 	--one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
 
-# Features
+## Features
 
 * Each backup is on its own folder named after the current timestamp. Files can be copied and restored directly, without any intermediate tool.
 
@@ -82,13 +82,13 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 * "latest" symlink that points to the latest successful backup.
 
-# TODO
+## TODO
 
 * Check source and destination file-system (`df -T /dest`). If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2
 * Add `--whole-file` arguments on Windows? See http://superuser.com/a/905415/73619
 * Minor changes (see TODO comments in the source).
 
-# LICENSE
+## LICENSE
 
 The MIT License (MIT)
 
