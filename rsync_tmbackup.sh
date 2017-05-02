@@ -108,15 +108,15 @@ fn_mkdir() {
 }
 
 fn_rm() {
-	fn_run_cmd "mkdir  /tmp/rsync-time-backup-emptydir"
-	if   [ -d '$1' ] ; then
-		# when deleting a directory use rsyny for performance reasons
+	if [[ -d $1 ]]; then
+		# when deleting a directory use rsync for performance reasons
+		fn_run_cmd "mkdir -p /tmp/rsync-time-backup-emptydir"
 		fn_run_cmd "rsync -a --delete /tmp/rsync-time-backup-emptydir/ '$1'"
-	elif [ -f '$1' ]; then
+		fn_run_cmd "rm -rf /tmp/rsync-time-backup-emptydir '$1'"
+	else
 		# when deleting a file use regular rm
-        	fn_run_cmd "rm -f '$1'"
+		fn_run_cmd "rm -f '$1'"
 	fi
-	fn_run_cmd "rm -rf /tmp/rsync-time-backup-emptydir '$1'"
 }
 
 fn_touch() {
@@ -143,7 +143,7 @@ EXCLUSION_FILE=""
 LOG_DIR="$HOME/.$APPNAME"
 AUTO_DELETE_LOG="1"
 
-RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group"
+RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
 while :; do
 	case $1 in
@@ -374,7 +374,6 @@ while : ; do
 	fi
 	CMD="$CMD $LINK_DEST_OPTION"
 	CMD="$CMD -- '$SRC_FOLDER/' '$SSH_FOLDER_PREFIX$DEST/'"
-	CMD="$CMD | grep -E '^deleting|[^/]$'"
 
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
@@ -387,7 +386,6 @@ while : ; do
 	# Check if we ran out of space
 	# -----------------------------------------------------------------------------
 
-	# TODO: find better way to check for out of space condition without parsing log.
 	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
 
 	if [ -n "$NO_SPACE_LEFT" ]; then
@@ -407,6 +405,7 @@ while : ; do
 	# -----------------------------------------------------------------------------
 	# Check whether rsync reported any errors
 	# -----------------------------------------------------------------------------
+
 	if [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
 		fn_log_warn "Rsync reported a warning, please check '$LOG_FILE' for more details."
 	fi
