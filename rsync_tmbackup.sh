@@ -39,6 +39,14 @@ fn_display_usage() {
 	echo " -h, --help           Display this help message."
 	echo " --rsync-get-flags    Display the default rsync flags that are used for backup."
 	echo " --rsync-set-flags    Set the rsync flags that are going to be used for backup."
+	echo " --log-dir            Set the log file directory. If this flag is set, generated files will"
+	echo "                      not be managed by the script - in particular they will not be"
+	echo "                      automatically deleted."
+	echo "                      Default: $LOG_DIR"
+	echo ""
+	echo "For more detailed help, please see the README file:"
+	echo ""
+	echo "https://github.com/laurent22/rsync-time-backup/blob/master/README.md"
 }
 
 fn_parse_date() {
@@ -132,6 +140,8 @@ SSH_PORT="22"
 SRC_FOLDER=""
 DEST_FOLDER=""
 EXCLUSION_FILE=""
+LOG_DIR="$HOME/.$APPNAME"
+AUTO_DELETE_LOG="1"
 
 RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group"
 
@@ -153,6 +163,11 @@ while :; do
 		--rsync-set-flags)
 			shift
 			RSYNC_FLAGS="$1"
+			;;
+		--log-dir)
+			shift
+			LOG_DIR="$1"
+			AUTO_DELETE_LOG="0"
 			;;
 		--)
 			shift
@@ -234,19 +249,18 @@ KEEP_ALL_DATE=$((EPOCH - 86400))       # 1 day ago
 KEEP_DAILIES_DATE=$((EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
-PROFILE_FOLDER="$HOME/.$APPNAME"
 DEST="$DEST_FOLDER/$NOW"
 PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
 INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
 MYPID="$$"
 
 # -----------------------------------------------------------------------------
-# Create profile folder if it doesn't exist
+# Create log folder if it doesn't exist
 # -----------------------------------------------------------------------------
 
-if [ ! -d "$PROFILE_FOLDER" ]; then
-	fn_log_info "Creating profile folder in '$PROFILE_FOLDER'..."
-	mkdir -- "$PROFILE_FOLDER"
+if [ ! -d "$LOG_DIR" ]; then
+	fn_log_info "Creating log folder in '$LOG_DIR'..."
+	mkdir -- "$LOG_DIR"
 fi
 
 # -----------------------------------------------------------------------------
@@ -342,7 +356,7 @@ while : ; do
 	# Start backup
 	# -----------------------------------------------------------------------------
 
-	LOG_FILE="$PROFILE_FOLDER/$(date +"%Y-%m-%d-%H%M%S").log"
+	LOG_FILE="$LOG_DIR/$(date +"%Y-%m-%d-%H%M%S").log"
 
 	fn_log_info "Starting backup..."
 	fn_log_info "From: $SRC_FOLDER/"
@@ -409,7 +423,9 @@ while : ; do
 	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
 	fn_rm "$INPROGRESS_FILE"
-	rm -f -- "$LOG_FILE"
+	if [[ $AUTO_DELETE_LOG == "1" ]]; then
+		rm -f -- "$LOG_FILE"
+	fi
 
 	fn_log_info "Backup completed without errors."
 
