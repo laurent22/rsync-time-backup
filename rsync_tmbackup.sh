@@ -406,12 +406,13 @@ while : ; do
 	# Check whether rsync reported any errors
 	# -----------------------------------------------------------------------------
 
-	if [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
-		fn_log_warn "Rsync reported a warning, please check '$LOG_FILE' for more details."
-	fi
 	if [ -n "$(grep "rsync error:" "$LOG_FILE")" ]; then
-		fn_log_error "Rsync reported an error, please check '$LOG_FILE' for more details."
+		fn_log_error "Rsync reported an error. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
 		exit 1
+	fi
+
+	if [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
+		fn_log_warn "Rsync reported a warning. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
 	fi
 
 	# -----------------------------------------------------------------------------
