@@ -45,6 +45,14 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 		flock -n /tmp/rsync_tmbackup.lock rsync_tmbackup.sh /home /mnt/backup
 
+# Backup expiration logic
+
+The script automatically deletes old backups using the following logic:
+- Within the last 24 hours, all the backups are kept.
+- Within the last 31 days, the most recent backup of each day is kept.
+- After 31 days, only the most recent backup of each month is kept.
+- Additionally, if the backup destination directory is full, the oldest backups are deleted until enough space is available.
+
 ## Exclude file
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial](https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
@@ -78,14 +86,13 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 * Check source and destination file-system (`df -T /dest`). If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2
 * Add `--whole-file` arguments on Windows? See http://superuser.com/a/905415/73619
-
 * Minor changes (see TODO comments in the source).
 
 # LICENSE
 
 The MIT License (MIT)
 
-Copyright (c) 2013-2016 Laurent Cozic
+Copyright (c) 2013-2017 Laurent Cozic
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
