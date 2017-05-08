@@ -406,28 +406,27 @@ while : ; do
 	# Check whether rsync reported any errors
 	# -----------------------------------------------------------------------------
 
+	EXIT_CODE="1"
 	if [ -n "$(grep "rsync error:" "$LOG_FILE")" ]; then
 		fn_log_error "Rsync reported an error. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
-		exit 1
-	fi
-
-	if [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
+	elif [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
 		fn_log_warn "Rsync reported a warning. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
+	else
+		fn_log_info "Backup completed without errors."
+		if [[ $AUTO_DELETE_LOG == "1" ]]; then
+			rm -f -- "$LOG_FILE"
+		fi
+		EXIT_CODE="0"
 	fi
 
 	# -----------------------------------------------------------------------------
-	# Add symlink to last successful backup
+	# Add symlink to last backup
 	# -----------------------------------------------------------------------------
 
 	fn_rm "$DEST_FOLDER/latest"
 	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
 	fn_rm "$INPROGRESS_FILE"
-	if [[ $AUTO_DELETE_LOG == "1" ]]; then
-		rm -f -- "$LOG_FILE"
-	fi
 
-	fn_log_info "Backup completed without errors."
-
-	exit 0
+	exit $EXIT_CODE
 done
