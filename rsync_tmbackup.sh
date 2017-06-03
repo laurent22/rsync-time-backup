@@ -72,7 +72,7 @@ fn_expire_backup() {
 	fi
 
 	fn_log_info "Expiring $1"
-	fn_rm "$1"
+	fn_rm_dir_fast "$1"
 }
 
 fn_parse_ssh() {
@@ -107,15 +107,35 @@ fn_mkdir() {
 	fn_run_cmd "mkdir -p -- '$1'"
 }
 
-fn_rm() {
-	if [[ -d $1 ]]; then
-		# when deleting a directory use rsync for performance reasons
+# Removes a file or symlink - not for directories
+fn_rm_file() {
+	fn_run_cmd "rm -f -- '$1'"
+}
+
+# Removes a directory
+fn_rm_dir() {
+	fn_run_cmd "rm -rf -- '$1'"
+}
+
+# This is an optimized way to delete a directory. It only makes sense to use
+# it when deleting huge directories, so it's only for expiring backups at
+# the moment.
+fn_rm_dir_fast() {
+	local DIR="$1"
+
+	if [[ -z $DIR ]]; then
+		fn_log_error "Directory path is empty - aborting."
+		exit 1
+	fi
+
+	DIR="$DIR/"
+
+	if [[ -d $DIR && ! -L $DIR ]]; then
 		fn_run_cmd "mkdir -p /tmp/rsync-time-backup-emptydir"
-		fn_run_cmd "rsync -a --delete /tmp/rsync-time-backup-emptydir/ '$1'"
-		fn_run_cmd "rm -rf /tmp/rsync-time-backup-emptydir '$1'"
+		fn_run_cmd "rsync -a --delete /tmp/rsync-time-backup-emptydir/ '$DIR'"
+		fn_run_cmd "rm -rf -- /tmp/rsync-time-backup-emptydir '$DIR'"
 	else
-		# when deleting a file use regular rm
-		fn_run_cmd "rm -f '$1'"
+		fn_log_error "Trying to delete a directory that either does not exist or is not a directory: $DIR"
 	fi
 }
 
@@ -433,10 +453,10 @@ while : ; do
 	# Add symlink to last backup
 	# -----------------------------------------------------------------------------
 
-	fn_rm "$DEST_FOLDER/latest"
+	fn_rm_file "$DEST_FOLDER/latest"
 	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
-	fn_rm "$INPROGRESS_FILE"
+	fn_rm_file "$INPROGRESS_FILE"
 
 	exit $EXIT_CODE
 done
