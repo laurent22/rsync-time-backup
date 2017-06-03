@@ -39,11 +39,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 * To mimic Time Machine's behaviour, a cron script can be setup to backup at regular interval. For example, the following cron job checks if the drive "/mnt/backup" is currently connected and, if it is, starts the backup. It does this check every 1 hour.
 
-		0 */1 * * * if [[ -d /mnt/backup ]]; then rsync_tmbackup.sh /home /mnt/backup; fi 
-	
-* The use of `flock` is recommended so that only one instance of the script runs at a given time:
-
-		flock -n /tmp/rsync_tmbackup.lock rsync_tmbackup.sh /home /mnt/backup
+		0 */1 * * * if [[ -d /mnt/backup ]]; then rsync_tmbackup.sh /home /mnt/backup; fi
 
 ## Backup expiration logic
 
@@ -56,6 +52,10 @@ The script automatically deletes old backups using the following logic:
 ## Exclude file
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial](https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
+
+## Built-in lock
+
+The script is designed so that only one backup operation can be active for a given directory. If a new backup operation is started while another is still active (i.e. it has not finished yet), the new one will be automaticalled interrupted. Thanks to this the use of `flock` to run the script is not necessary.
 
 ## Rsync options
 
