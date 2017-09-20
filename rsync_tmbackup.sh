@@ -10,7 +10,7 @@ fn_log_info()  { echo "$APPNAME: $1"; }
 fn_log_warn()  { echo "$APPNAME: [WARNING] $1" 1>&2; }
 fn_log_error() { echo "$APPNAME: [ERROR] $1" 1>&2; }
 fn_log_info_cmd()  {
-	if [ -n "$SSH_CMD" ]; then
+	if [ -n "$SSH_DEST_FOLDER_PREFIX" ]; then
 		echo "$APPNAME: $SSH_CMD '$1'";
 	else
 		echo "$APPNAME: $1";
@@ -83,7 +83,6 @@ fn_parse_ssh() {
 		SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
 		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		SSH_DEST_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
-	
 	elif [[ "$SRC_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]
 	then
 		SSH_USER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
@@ -95,7 +94,7 @@ fn_parse_ssh() {
 }
 
 fn_run_cmd() {
-	if [ -n "$SSH_CMD" ]
+	if [ -n "$SSH_DEST_FOLDER_PREFIX" ] 
 	then
 		eval "$SSH_CMD '$1'"
 	else
@@ -205,13 +204,13 @@ if [[ -z "$SRC_FOLDER" || -z "$DEST_FOLDER" ]]; then
 	exit 1
 fi
 
-# Strips off last slash. Note that it means the root folder "/"
+# Strips off last slash from dest. Note that it means the root folder "/"
 # will be represented as an empty string "", which is fine
 # with the current script (since a "/" is added when needed)
 # but still something to keep in mind.
-# Don't think it would with DEST_FOLDER set to "/" though,
-# but there's probably not a use case for this anyway.
-SRC_FOLDER="${SRC_FOLDER%/}"
+# However, due to this behavior we delay stripping the last slash for
+# the source folder until after parsing for ssh usage.
+
 DEST_FOLDER="${DEST_FOLDER%/}"
 
 fn_parse_ssh
@@ -223,6 +222,9 @@ fi
 if [ -n "$SSH_SRC_FOLDER" ]; then
 	SRC_FOLDER="$SSH_SRC_FOLDER"
 fi
+
+# Now strip off last slash from source folder.
+SRC_FOLDER="${SRC_FOLDER%/}"
 
 for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
 	if [[ "$ARG" == *"'"* ]]; then
