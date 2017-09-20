@@ -402,7 +402,6 @@ while : ; do
 	fn_log_info "$CMD"
 
 	fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
-
 	eval $CMD
 
 	# -----------------------------------------------------------------------------
