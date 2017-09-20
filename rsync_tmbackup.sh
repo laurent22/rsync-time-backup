@@ -380,7 +380,7 @@ while : ; do
 	LOG_FILE="$LOG_DIR/$(date +"%Y-%m-%d-%H%M%S").log"
 
 	fn_log_info "Starting backup..."
-	fn_log_info "From: $SRC_FOLDER/"
+	fn_log_info "From: $SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/"
 	fn_log_info "To:   $SSH_DEST_FOLDER_PREFIX$DEST/"
 
 	CMD="rsync"
@@ -394,7 +394,7 @@ while : ; do
 		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
 	fi
 	CMD="$CMD $LINK_DEST_OPTION"
-	CMD="$CMD -- '$SRC_FOLDER/' '$SSH_DEST_FOLDER_PREFIX$DEST/'"
+	CMD="$CMD -- '$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/' '$SSH_DEST_FOLDER_PREFIX$DEST/'"
 
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
