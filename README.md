@@ -63,6 +63,11 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links \
 	--one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
+	
+	
+## How to restore
+
+The script creates a backup in a regular directory so you can simply copy the files back to the original directory. You could do that with something like `rsync -aP /path/to/last/backup/ /path/to/restore/to/`. Consider using the `--dry-run` option to check what exactly is going to be copied. Use `--delete` if you also want to delete files that exist in the destination but not in the backup (obviously extra care must be taken when using this option).
 
 ## Features
 
