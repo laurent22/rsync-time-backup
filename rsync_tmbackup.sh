@@ -60,7 +60,7 @@ fn_parse_date() {
 }
 
 fn_find_backups() {
-	fn_run_cmd "find "$DEST_FOLDER" -maxdepth 1 -type d -name "????-??-??-??????" -prune | sort -r"
+	fn_run_cmd "find "$DEST_FOLDER" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
 }
 
 fn_expire_backup() {
