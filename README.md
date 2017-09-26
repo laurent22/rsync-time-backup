@@ -40,7 +40,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 * Backup from remote drive over SSH:
 
-		rsync_tmbackup.shuser@example.com:/home /mnt/backup_drive
+		rsync_tmbackup.sh user@example.com:/home /mnt/backup_drive
 
 * To mimic Time Machine's behaviour, a cron script can be setup to backup at regular interval. For example, the following cron job checks if the drive "/mnt/backup" is currently connected and, if it is, starts the backup. It does this check every 1 hour.
 
@@ -78,9 +78,7 @@ The script creates a backup in a regular directory so you can simply copy the fi
 
 * Each backup is on its own folder named after the current timestamp. Files can be copied and restored directly, without any intermediate tool.
 
-* Backup to remote destinations over SSH.
-
-* Backup from remote destinations over SSH.
+* Backup to/from remote destinations over SSH.
 
 * Files that haven't changed from one backup to the next are hard-linked to the previous backup so take very little extra space.
 
