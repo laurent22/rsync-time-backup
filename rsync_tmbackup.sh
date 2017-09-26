@@ -10,7 +10,7 @@ fn_log_info()  { echo "$APPNAME: $1"; }
 fn_log_warn()  { echo "$APPNAME: [WARNING] $1" 1>&2; }
 fn_log_error() { echo "$APPNAME: [ERROR] $1" 1>&2; }
 fn_log_info_cmd()  {
-	if [ -n "$SSH_CMD" ]; then
+	if [ -n "$SSH_DEST_FOLDER_PREFIX" ]; then
 		echo "$APPNAME: $SSH_CMD '$1'";
 	else
 		echo "$APPNAME: $1";
@@ -32,7 +32,7 @@ trap 'fn_terminate_script' SIGINT
 # Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 fn_display_usage() {
-	echo "Usage: $(basename $0) [OPTION]... <SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]"
+	echo "Usage: $(basename $0) [OPTION]... <[USER@HOST:]SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]"
 	echo ""
 	echo "Options"
 	echo " -p, --port           SSH port."
@@ -82,12 +82,19 @@ fn_parse_ssh() {
 		SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
 		SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
 		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
-		SSH_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
+		SSH_DEST_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
+	elif [[ "$SRC_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]
+	then
+		SSH_USER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
+		SSH_HOST=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
+		SSH_SRC_FOLDER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
+		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+		SSH_SRC_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
 	fi
 }
 
 fn_run_cmd() {
-	if [ -n "$SSH_CMD" ]
+	if [ -n "$SSH_DEST_FOLDER_PREFIX" ] 
 	then
 		eval "$SSH_CMD '$1'"
 	else
@@ -130,8 +137,10 @@ fn_ln() {
 SSH_USER=""
 SSH_HOST=""
 SSH_DEST_FOLDER=""
+SSH_SRC_FOLDER=""
 SSH_CMD=""
-SSH_FOLDER_PREFIX=""
+SSH_DEST_FOLDER_PREFIX=""
+SSH_SRC_FOLDER_PREFIX=""
 SSH_PORT="22"
 
 SRC_FOLDER=""
@@ -195,13 +204,13 @@ if [[ -z "$SRC_FOLDER" || -z "$DEST_FOLDER" ]]; then
 	exit 1
 fi
 
-# Strips off last slash. Note that it means the root folder "/"
+# Strips off last slash from dest. Note that it means the root folder "/"
 # will be represented as an empty string "", which is fine
 # with the current script (since a "/" is added when needed)
 # but still something to keep in mind.
-# Don't think it would with DEST_FOLDER set to "/" though,
-# but there's probably not a use case for this anyway.
-SRC_FOLDER="${SRC_FOLDER%/}"
+# However, due to this behavior we delay stripping the last slash for
+# the source folder until after parsing for ssh usage.
+
 DEST_FOLDER="${DEST_FOLDER%/}"
 
 fn_parse_ssh
@@ -209,6 +218,13 @@ fn_parse_ssh
 if [ -n "$SSH_DEST_FOLDER" ]; then
 	DEST_FOLDER="$SSH_DEST_FOLDER"
 fi
+
+if [ -n "$SSH_SRC_FOLDER" ]; then
+	SRC_FOLDER="$SSH_SRC_FOLDER"
+fi
+
+# Now strip off last slash from source folder.
+SRC_FOLDER="${SRC_FOLDER%/}"
 
 for ARG in "$SRC_FOLDER" "$DEST_FOLDER" "$EXCLUSION_FILE"; do
 	if [[ "$ARG" == *"'"* ]]; then
@@ -291,7 +307,7 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
-		fn_log_info "$SSH_FOLDER_PREFIX$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
+		fn_log_info "$SSH_DEST_FOLDER_PREFIX$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
 		fn_run_cmd "mv -- $PREVIOUS_DEST $DEST"
 		if [ "$(fn_find_backups | wc -l)" -gt 1 ]; then
 			PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
@@ -317,7 +333,7 @@ while : ; do
 		# If the path is relative, it needs to be relative to the destination. To keep
 		# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
 		PREVIOUS_DEST="$(fn_get_absolute_path "$PREVIOUS_DEST")"
-		fn_log_info "Previous backup found - doing incremental backup from $SSH_FOLDER_PREFIX$PREVIOUS_DEST"
+		fn_log_info "Previous backup found - doing incremental backup from $SSH_DEST_FOLDER_PREFIX$PREVIOUS_DEST"
 		LINK_DEST_OPTION="--link-dest='$PREVIOUS_DEST'"
 	fi
 
@@ -326,7 +342,7 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 	if [ -z "$(fn_find "$DEST -type d" 2>/dev/null)" ]; then
-		fn_log_info "Creating destination $SSH_FOLDER_PREFIX$DEST"
+		fn_log_info "Creating destination $SSH_DEST_FOLDER_PREFIX$DEST"
 		fn_mkdir "$DEST"
 	fi
 
@@ -366,8 +382,8 @@ while : ; do
 	LOG_FILE="$LOG_DIR/$(date +"%Y-%m-%d-%H%M%S").log"
 
 	fn_log_info "Starting backup..."
-	fn_log_info "From: $SRC_FOLDER/"
-	fn_log_info "To:   $SSH_FOLDER_PREFIX$DEST/"
+	fn_log_info "From: $SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/"
+	fn_log_info "To:   $SSH_DEST_FOLDER_PREFIX$DEST/"
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
@@ -380,13 +396,12 @@ while : ; do
 		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
 	fi
 	CMD="$CMD $LINK_DEST_OPTION"
-	CMD="$CMD -- '$SRC_FOLDER/' '$SSH_FOLDER_PREFIX$DEST/'"
+	CMD="$CMD -- '$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/' '$SSH_DEST_FOLDER_PREFIX$DEST/'"
 
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
 
 	fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
-
 	eval $CMD
 
 	# -----------------------------------------------------------------------------
