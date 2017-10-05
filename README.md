@@ -23,6 +23,24 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	                      not be managed by the script - in particular they will not be
 	                      automatically deleted.
 
+## Features
+
+* Each backup is on its own folder named after the current timestamp. Files can be copied and restored directly, without any intermediate tool.
+
+* Backup to/from remote destinations over SSH.
+
+* Files that haven't changed from one backup to the next are hard-linked to the previous backup so take very little extra space.
+
+* Safety check - the backup will only happen if the destination has explicitly been marked as a backup destination.
+
+* Resume feature - if a backup has failed or was interrupted, the tool will resume from there on the next backup.
+
+* Exclude file - support for pattern-based exclusion via the `--exclude-from` rsync parameter.
+
+* Automatically purge old backups - within 24 hours, all backups are kept. Within one month, the most recent backup for each day is kept. For all previous backups, the most recent of each month is kept.
+
+* "latest" symlink that points to the latest successful backup.
+
 ## Examples
 	
 * Backup the home folder to backup_drive
@@ -73,24 +91,6 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 ## How to restore
 
 The script creates a backup in a regular directory so you can simply copy the files back to the original directory. You could do that with something like `rsync -aP /path/to/last/backup/ /path/to/restore/to/`. Consider using the `--dry-run` option to check what exactly is going to be copied. Use `--delete` if you also want to delete files that exist in the destination but not in the backup (obviously extra care must be taken when using this option).
-
-## Features
-
-* Each backup is on its own folder named after the current timestamp. Files can be copied and restored directly, without any intermediate tool.
-
-* Backup to/from remote destinations over SSH.
-
-* Files that haven't changed from one backup to the next are hard-linked to the previous backup so take very little extra space.
-
-* Safety check - the backup will only happen if the destination has explicitly been marked as a backup destination.
-
-* Resume feature - if a backup has failed or was interrupted, the tool will resume from there on the next backup.
-
-* Exclude file - support for pattern-based exclusion via the `--exclude-from` rsync parameter.
-
-* Automatically purge old backups - within 24 hours, all backups are kept. Within one month, the most recent backup for each day is kept. For all previous backups, the most recent of each month is kept.
-
-* "latest" symlink that points to the latest successful backup.
 
 ## Extensions
 
