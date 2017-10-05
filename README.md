@@ -92,6 +92,11 @@ The script creates a backup in a regular directory so you can simply copy the fi
 
 * "latest" symlink that points to the latest successful backup.
 
+## Extensions
+
+* [rtb-wrapper](https://github.com/thomas-mc-work/rtb-wrapper): Allows creating backup profiles in config files. Handles both backup and restore operations.
+* [time-travel](https://github.com/joekerna/time-travel): Smooth integration into OSX Notification Center
+
 ## TODO
 
 * Check source and destination file-system (`df -T /dest`). If one of them is FAT, use the --modify-window rsync parameter (see `man rsync`) with a value of 1 or 2
