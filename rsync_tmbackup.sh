@@ -182,7 +182,7 @@ while :; do
 			EXCLUSION_FILE="$3"
 			break
 			;;
-		-?*)
+		-*)
 			fn_log_error "Unknown option: \"$1\""
 			fn_log_info ""
 			fn_display_usage
