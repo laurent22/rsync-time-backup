@@ -59,6 +59,26 @@ fn_parse_date() {
 	esac
 }
 
+fn_parse_strategy() {
+        # The current set (x,y) of the two parameters (after x days, keep y number of backups)
+        STRATEGY_ARRAY=()
+
+        # STRATEGY without comma
+        NO_COMMAS=$(echo $STRATEGY | sed "s/,//g")
+
+        # Extracts an array of three pairs of elements from the --strategy option
+        IFS=' '
+        PARAMETER_ARRAY=(`echo ${NO_COMMAS}`)
+
+        # Build the expiration strategy matrix
+        for ((i=0; i<3; i++));
+        do
+            STRATEGY_ARRAY=($(echo ${PARAMETER_ARRAY[i]} | sed "s/:/ /g"))
+            EXPIRATION_STRATEGY_MATRIX[$i,0]=${STRATEGY_ARRAY[0]}
+            EXPIRATION_STRATEGY_MATRIX[$i,1]=${STRATEGY_ARRAY[1]}
+        done
+}
+
 fn_find_backups() {
 	fn_run_cmd "find "$DEST_FOLDER" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
 }
@@ -148,6 +168,8 @@ DEST_FOLDER=""
 EXCLUSION_FILE=""
 LOG_DIR="$HOME/.$APPNAME"
 AUTO_DELETE_LOG="1"
+STRATEGY="1:1, 30:7, 365:30"
+declare -A EXPIRATION_STRATEGY_MATRIX
 
 RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
@@ -169,6 +191,10 @@ while :; do
 		--rsync-set-flags)
 			shift
 			RSYNC_FLAGS="$1"
+			;;
+		--strategy)
+			shift
+			STRATEGY="$1"
 			;;
 		--log-dir)
 			shift
@@ -349,6 +375,14 @@ while : ; do
 	# -----------------------------------------------------------------------------
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
+
+	# Parses the --strategy option and creates a matrix of its elements
+	fn_parse_strategy "$STRATEGY"
+	# Prints out the expiration strategy matrix (for debugging purpose only)
+	echo "After" ${EXPIRATION_STRATEGY_MATRIX[0,0]} "days keep a backup every" ${EXPIRATION_STRATEGY_MATRIX[0,1]} "days"
+	echo "After" ${EXPIRATION_STRATEGY_MATRIX[1,0]} "days keep a backup every" ${EXPIRATION_STRATEGY_MATRIX[1,1]} "days"
+	echo "After" ${EXPIRATION_STRATEGY_MATRIX[2,0]} "days keep a backup every" ${EXPIRATION_STRATEGY_MATRIX[2,1]} "days"
+	
 
 	# Default value for $PREV ensures that the most recent backup is never deleted.
 	PREV="0000-00-00-000000"
