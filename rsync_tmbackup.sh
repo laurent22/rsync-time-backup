@@ -75,6 +75,15 @@ fn_parse_date() {
 	fi
 }
 
+fn_run_cmd() {
+	if [ -n "$SSH_DEST_FOLDER_PREFIX" ] 
+	then
+		eval "$SSH_CMD '$1'"
+	else
+		eval $1
+	fi
+}
+
 fn_find_backups() {
 	fn_run_cmd "find "$DEST_FOLDER" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
 }
@@ -108,8 +117,7 @@ fn_expire_backups() {
 		fi
 
 		# Find which strategy token applies to this particular backup
-		IFS=' '
-		for strategy_token in $EXPIRATION_STRATEGY; do
+		for strategy_token in $(echo $EXPIRATION_STRATEGY | tr " " "\n" | sort -r -n); do
 			IFS=':' read -r -a t <<< "$strategy_token"
 
 			# After which date (relative to today) this token applies (X)
@@ -158,15 +166,6 @@ fn_parse_ssh() {
 		SSH_SRC_FOLDER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
 		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		SSH_SRC_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
-	fi
-}
-
-fn_run_cmd() {
-	if [ -n "$SSH_DEST_FOLDER_PREFIX" ] 
-	then
-		eval "$SSH_CMD '$1'"
-	else
-		eval $1
 	fi
 }
 
