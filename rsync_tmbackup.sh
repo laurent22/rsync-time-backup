@@ -43,6 +43,9 @@ fn_display_usage() {
 	echo "                      not be managed by the script - in particular they will not be"
 	echo "                      automatically deleted."
 	echo "                      Default: $LOG_DIR"
+	echo " --strategy           Set the expiration strategy. Default: \"365:30 30:7 1:1\" means after one"
+	echo "                      day, keep one backup per day. After 30 days, keep one backup every 7 days."
+	echo "                      After 365 days keep one backup every 30 days."
 	echo ""
 	echo "For more detailed help, please see the README file:"
 	echo ""
@@ -50,33 +53,26 @@ fn_display_usage() {
 }
 
 fn_parse_date() {
+	local date_string="$1"
+	local date_format="$2"
+
 	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
-	case "$OSTYPE" in
-		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
-		cygwin*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
-		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
-		FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
-	esac
-}
 
-fn_parse_strategy() {
-        # The current set (x,y) of the two parameters (after x days, keep y number of backups)
-        STRATEGY_ARRAY=()
-
-        # STRATEGY without comma
-        NO_COMMAS=$(echo $STRATEGY | sed "s/,//g")
-
-        # Extracts an array of three pairs of elements from the --strategy option
-        IFS=' '
-        PARAMETER_ARRAY=(`echo ${NO_COMMAS}`)
-
-        # Build the expiration strategy matrix
-        for ((i=0; i<3; i++));
-        do
-            STRATEGY_ARRAY=($(echo ${PARAMETER_ARRAY[i]} | sed "s/:/ /g"))
-            EXPIRATION_STRATEGY_MATRIX[$i,0]=${STRATEGY_ARRAY[0]}
-            EXPIRATION_STRATEGY_MATRIX[$i,1]=${STRATEGY_ARRAY[1]}
-        done
+	if [[ -z "$date_format" || "$date_format" == "Y-m-d H:i:s" ]]; then
+		case "$OSTYPE" in
+			linux*) date -d "${date_string:0:10} ${date_string:1date_string:2}:${date_string:13:2}:${date_string:15:2}" +%s ;;
+			cygwin*) date -d "${date_string:0:10} ${date_string:1date_string:2}:${date_string:13:2}:${date_string:15:2}" +%s ;;
+			darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$date_string" "+%s" ;;
+			FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$date_string" "+%s" ;;
+		esac
+	else
+		case "$OSTYPE" in
+			linux*) date -d "${date_string:0:10} 00:00:00" +%s ;;
+			cygwin*) date -d "${date_string:0:10} 00:00:00" +%s ;;
+			darwin*) date -j -f "%Y-%m-%d" "$date_string" "+%s" ;;
+			FreeBSD*) date -j -f "%Y-%m-%d" "$date_string" "+%s" ;;
+		esac
+	fi
 }
 
 fn_find_backups() {
@@ -93,6 +89,58 @@ fn_expire_backup() {
 
 	fn_log_info "Expiring $1"
 	fn_rm_dir "$1"
+}
+
+fn_expire_backups() {
+	local current_timestamp=$EPOCH
+	local last_kept_timestamp=9999999999
+
+	# Process each backup dir from most recent to oldest
+	for backup_dir in $(fn_find_backups | sort -r); do
+		local backup_date=$(basename "$backup_dir")
+		local backup_day=${backup_date:0:10}
+		local backup_timestamp=$(fn_parse_date $backup_day "Y-m-d")
+
+		# Skip if failed to parse date...
+		if [ -z "$backup_timestamp" ]; then
+			fn_log_warn "Could not parse date: $backup_dir"
+			continue
+		fi
+
+		# Find which strategy token applies to this particular backup
+		IFS=' '
+		for strategy_token in $EXPIRATION_STRATEGY; do
+			IFS=':' read -r -a t <<< "$strategy_token"
+
+			# After which date (relative to today) this token applies (X)
+			local cut_off_timestamp=$((current_timestamp - ${t[0]} * 86400))
+
+			# Every how many days should a backup be kept past the cut off date (Y)
+			local cut_off_interval=$((${t[1]} * 86400))
+
+			# If we've found the strategy token that applies to this backup
+			if [ "$backup_timestamp" -le "$cut_off_timestamp" ]; then
+
+				# Special case: if Y is "0" we delete every time
+				if [ $cut_off_interval -eq "0" ]; then
+					fn_expire_backup "$backup_dir"
+					break
+				fi
+
+				# Check if the current backup is in the interval between
+				# the last backup that was kept and Y
+				local interval_since_last_kept=$((last_kept_timestamp - backup_timestamp))
+				if [ "$interval_since_last_kept" -lt "$cut_off_interval" ]; then
+					# Yes: Delete that one
+					fn_expire_backup "$backup_dir"
+				else
+					# No: Keep it
+					last_kept_timestamp=$backup_timestamp
+				fi
+				break
+			fi
+		done
+	done
 }
 
 fn_parse_ssh() {
@@ -168,8 +216,7 @@ DEST_FOLDER=""
 EXCLUSION_FILE=""
 LOG_DIR="$HOME/.$APPNAME"
 AUTO_DELETE_LOG="1"
-STRATEGY="1:1, 30:7, 365:30"
-declare -A EXPIRATION_STRATEGY_MATRIX
+EXPIRATION_STRATEGY="365:30 1:1 30:7"
 
 RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
@@ -376,38 +423,7 @@ while : ; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-	# Parses the --strategy option and creates a matrix of its elements
-	fn_parse_strategy "$STRATEGY"
-	# Prints out the expiration strategy matrix (for debugging purpose only)
-	echo "After" ${EXPIRATION_STRATEGY_MATRIX[0,0]} "days keep a backup every" ${EXPIRATION_STRATEGY_MATRIX[0,1]} "days"
-	echo "After" ${EXPIRATION_STRATEGY_MATRIX[1,0]} "days keep a backup every" ${EXPIRATION_STRATEGY_MATRIX[1,1]} "days"
-	echo "After" ${EXPIRATION_STRATEGY_MATRIX[2,0]} "days keep a backup every" ${EXPIRATION_STRATEGY_MATRIX[2,1]} "days"
-	
-
-	# Default value for $PREV ensures that the most recent backup is never deleted.
-	PREV="0000-00-00-000000"
-	for FILENAME in $(fn_find_backups | sort -r); do
-		BACKUP_DATE=$(basename "$FILENAME")
-		TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
-
-		# Skip if failed to parse date...
-		if [ -z "$TIMESTAMP" ]; then
-			fn_log_warn "Could not parse date: $FILENAME"
-			continue
-		fi
-
-		if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
-			true
-		elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
-			# Delete all but the most recent of each day.
-			[ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
-		else
-			# Delete all but the most recent of each month.
-			[ "${BACKUP_DATE:0:7}" == "${PREV:0:7}" ] && fn_expire_backup "$FILENAME"
-		fi
-
-		PREV=$BACKUP_DATE
-	done
+	fn_expire_backups
 
 	# -----------------------------------------------------------------------------
 	# Start backup
