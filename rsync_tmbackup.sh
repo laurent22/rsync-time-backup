@@ -103,7 +103,7 @@ fn_parse_ssh() {
 }
 
 fn_run_cmd() {
-	if [ -n "$SSH_DEST_FOLDER_PREFIX" ] 
+	if [ -n "$SSH_DEST_FOLDER_PREFIX" ]
 	then
 		eval "$SSH_CMD '$1'"
 	else
@@ -305,9 +305,9 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 			fn_log_error "Previous backup task is still active - aborting (command: $RUNNINGCMD)."
 			exit 1
 		fi
-	else 
+	else
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
-		if [ "$RUNNINGPID" = "$(pgrep "$APPNAME")" ]; then
+		if [ "$RUNNINGPID" = "$(pgrep -o -f "$APPNAME")" ]; then
 			fn_log_error "Previous backup task is still active - aborting."
 			exit 1
 		fi
