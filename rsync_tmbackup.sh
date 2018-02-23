@@ -43,7 +43,7 @@ fn_display_usage() {
 	echo "                      not be managed by the script - in particular they will not be"
 	echo "                      automatically deleted."
 	echo "                      Default: $LOG_DIR"
-	echo " --strategy           Set the expiration strategy. Default: \"365:30 30:7 1:1\" means after one"
+	echo " --strategy           Set the expiration strategy. Default: \"1:1 30:7 365:30\" means after one"
 	echo "                      day, keep one backup per day. After 30 days, keep one backup every 7 days."
 	echo "                      After 365 days keep one backup every 30 days."
 	echo ""
@@ -240,7 +240,7 @@ while :; do
 			;;
 		--strategy)
 			shift
-			STRATEGY="$1"
+			EXPIRATION_STRATEGY="$1"
 			;;
 		--log-dir)
 			shift
