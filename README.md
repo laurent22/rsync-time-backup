@@ -69,11 +69,13 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 ## Backup expiration logic
 
-The script automatically deletes old backups using the following logic:
-- Within the last 24 hours, all the backups are kept.
-- Within the last 31 days, the most recent backup of each day is kept.
-- After 31 days, only the most recent backup of each month is kept.
-- Additionally, if the backup destination directory is full, the oldest backups are deleted until enough space is available.
+Backup sets are automatically deleted following a simple expiration strategy defined with the `--strategy` flag. This strategy is a series of time intervals with each item being defined as `x:y`, which means "after x days, keep one backup every y days". The default strategy is `1:1 30:7 365:30`, which means:
+
+- After **1** day, keep one backup every **1** day (**1:1**).
+- After **30** days, keep one backup every **7** days (**30:7**).
+- After **365** days, keep one backup every **30** days (**365:30**).
+
+Before the first interval (i.e. by default within the first 24h) it is implied that all backup sets are kept. Additionally, if the backup destination directory is full, the oldest backups are deleted until enough space is available.
 
 ## Exclude file
 
@@ -110,7 +112,7 @@ The script creates a backup in a regular directory so you can simply copy the fi
 
 The MIT License (MIT)
 
-Copyright (c) 2013-2017 Laurent Cozic
+Copyright (c) 2013-2018 Laurent Cozic
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
