@@ -57,35 +57,24 @@ fn_parse_date() {
 	local date_format="$2"
 
 	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
-
-	if [[ -z "$date_format" || "$date_format" == "Y-m-d H:i:s" ]]; then
-		case "$OSTYPE" in
-			linux*) date -d "${date_string:0:10} ${date_string:1date_string:2}:${date_string:13:2}:${date_string:15:2}" +%s ;;
-			cygwin*) date -d "${date_string:0:10} ${date_string:1date_string:2}:${date_string:13:2}:${date_string:15:2}" +%s ;;
-			darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$date_string" "+%s" ;;
-			FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$date_string" "+%s" ;;
-		esac
-	else
-		case "$OSTYPE" in
-			linux*) date -d "${date_string:0:10} 00:00:00" +%s ;;
-			cygwin*) date -d "${date_string:0:10} 00:00:00" +%s ;;
-			darwin*) date -j -f "%Y-%m-%d" "$date_string" "+%s" ;;
-			FreeBSD*) date -j -f "%Y-%m-%d" "$date_string" "+%s" ;;
-		esac
-	fi
-}
-
-fn_run_cmd() {
-	if [ -n "$SSH_DEST_FOLDER_PREFIX" ] 
-	then
-		eval "$SSH_CMD '$1'"
-	else
-		eval $1
-	fi
+	case "$OSTYPE" in
+		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
+		cygwin*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
+		darwin8*) yy=`expr ${1:0:4}`
+			mm=`expr ${1:5:2} - 1`
+			dd=`expr ${1:8:2}`
+			hh=`expr ${1:11:2}`
+			mi=`expr ${1:13:2}`
+			ss=`expr ${1:15:2}`
+			# Because under MacOS X Tiger 'date -j' doesn't work, we do this:
+			perl -e 'use Time::Local; print timelocal('$ss','$mi','$hh','$dd','$mm','$yy'),"\n";' ;;
+		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+		FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+	esac
 }
 
 fn_find_backups() {
-	fn_run_cmd "find "$DEST_FOLDER" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
+	fn_run_cmd "find "$DEST_FOLDER/" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
 }
 
 fn_expire_backup() {
@@ -152,20 +141,30 @@ fn_expire_backups() {
 }
 
 fn_parse_ssh() {
-	if [[ "$DEST_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]
+	# To keep compatibility with bash version < 3, we use grep
+	if echo "$DEST_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
 	then
 		SSH_USER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
 		SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
 		SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
 		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		SSH_DEST_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
-	elif [[ "$SRC_FOLDER" =~ ^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$ ]]
+	elif echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
 	then
 		SSH_USER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
 		SSH_HOST=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
 		SSH_SRC_FOLDER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
 		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		SSH_SRC_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
+	fi
+}
+
+fn_run_cmd() {
+	if [ -n "$SSH_DEST_FOLDER_PREFIX" ]
+	then
+		eval "$SSH_CMD '$1'"
+	else
+		eval $1
 	fi
 }
 
@@ -368,9 +367,9 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 			fn_log_error "Previous backup task is still active - aborting (command: $RUNNINGCMD)."
 			exit 1
 		fi
-	else 
+	else
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
-		if [ "$RUNNINGPID" = "$(pgrep "$APPNAME")" ]; then
+		if [ "$RUNNINGPID" = "$(pgrep -o -f "$APPNAME")" ]; then
 			fn_log_error "Previous backup task is still active - aborting."
 			exit 1
 		fi
