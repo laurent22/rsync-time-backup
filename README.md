@@ -22,7 +22,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	 --log-dir            Set the log file directory. If this flag is set, generated files will
 	                      not be managed by the script - in particular they will not be
 	                      automatically deleted.
-	 --strategy           Set the expiration strategy. Default: "365:30 30:7 1:1" means after one
+	 --strategy           Set the expiration strategy. Default: "1:1 30:7 365:30" means after one
 	                      day, keep one backup per day. After 30 days, keep one backup every 7 days.
 	                      After 365 days keep one backup every 30 days.
 
@@ -77,7 +77,7 @@ Backup sets are automatically deleted following a simple expiration strategy def
 
 Before the first interval (i.e. by default within the first 24h) it is implied that all backup sets are kept. Additionally, if the backup destination directory is full, the oldest backups are deleted until enough space is available.
 
-## Exclude file
+## Exclusion file
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial](https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
