@@ -55,9 +55,6 @@ fn_display_usage() {
 }
 
 fn_parse_date() {
-	local date_string="$1"
-	local date_format="$2"
-
 	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
 	case "$OSTYPE" in
 		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
@@ -98,8 +95,7 @@ fn_expire_backups() {
 	# Process each backup dir from most recent to oldest
 	for backup_dir in $(fn_find_backups | sort -r); do
 		local backup_date=$(basename "$backup_dir")
-		local backup_day=${backup_date:0:10}
-		local backup_timestamp=$(fn_parse_date $backup_day "Y-m-d")
+		local backup_timestamp=$(fn_parse_date "$backup_date")
 
 		# Skip if failed to parse date...
 		if [ -z "$backup_timestamp" ]; then
