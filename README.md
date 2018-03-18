@@ -25,6 +25,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	 --strategy           Set the expiration strategy. Default: "1:1 30:7 365:30" means after one
 	                      day, keep one backup per day. After 30 days, keep one backup every 7 days.
 	                      After 365 days keep one backup every 30 days.
+	 --no-auto-expire     Set option to disable automatically purging old backups when out of space.
 
 ## Features
 
@@ -91,6 +92,10 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links \
 	--one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
+
+## No automatic backup expiration
+
+An option to diable the default behaviour to purge old backups when out of space. This option is set with the `--no-auto-expire` flag.
 	
 	
 ## How to restore

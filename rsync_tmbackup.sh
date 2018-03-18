@@ -46,6 +46,8 @@ fn_display_usage() {
 	echo " --strategy           Set the expiration strategy. Default: \"1:1 30:7 365:30\" means after one"
 	echo "                      day, keep one backup per day. After 30 days, keep one backup every 7 days."
 	echo "                      After 365 days keep one backup every 30 days."
+	echo " --no-auto-expire     Disable automatically deleting backups when out of space. Instead an error"
+	echo "                      is logged, and the backup is aborted."
 	echo ""
 	echo "For more detailed help, please see the README file:"
 	echo ""
@@ -211,6 +213,7 @@ EXCLUSION_FILE=""
 LOG_DIR="$HOME/.$APPNAME"
 AUTO_DELETE_LOG="1"
 EXPIRATION_STRATEGY="1:1 30:7 365:30"
+AUTO_EXPIRE="1"
 
 RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
@@ -241,6 +244,9 @@ while :; do
 			shift
 			LOG_DIR="$1"
 			AUTO_DELETE_LOG="0"
+			;;
+		--no-auto-expire)
+			AUTO_EXPIRE="0"
 			;;
 		--)
 			shift
@@ -455,6 +461,12 @@ while : ; do
 	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
 
 	if [ -n "$NO_SPACE_LEFT" ]; then
+
+		if [[ $AUTO_EXPIRE == "0" ]]; then
+			fn_log_error "No space left on device, and automatic purging of old backups is disabled."
+			exit 1
+		fi
+
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
 
 		if [[ "$(fn_find_backups | wc -l)" -lt "2" ]]; then
