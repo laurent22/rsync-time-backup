@@ -22,6 +22,10 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	 --log-dir            Set the log file directory. If this flag is set, generated files will
 	                      not be managed by the script - in particular they will not be
 	                      automatically deleted.
+	 --strategy           Set the expiration strategy. Default: "1:1 30:7 365:30" means after one
+	                      day, keep one backup per day. After 30 days, keep one backup every 7 days.
+	                      After 365 days keep one backup every 30 days.
+	 --no-auto-expire     Set option to disable automatically purging old backups when out of space.
 
 ## Features
 
@@ -66,13 +70,15 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 ## Backup expiration logic
 
-The script automatically deletes old backups using the following logic:
-- Within the last 24 hours, all the backups are kept.
-- Within the last 31 days, the most recent backup of each day is kept.
-- After 31 days, only the most recent backup of each month is kept.
-- Additionally, if the backup destination directory is full, the oldest backups are deleted until enough space is available.
+Backup sets are automatically deleted following a simple expiration strategy defined with the `--strategy` flag. This strategy is a series of time intervals with each item being defined as `x:y`, which means "after x days, keep one backup every y days". The default strategy is `1:1 30:7 365:30`, which means:
 
-## Exclude file
+- After **1** day, keep one backup every **1** day (**1:1**).
+- After **30** days, keep one backup every **7** days (**30:7**).
+- After **365** days, keep one backup every **30** days (**365:30**).
+
+Before the first interval (i.e. by default within the first 24h) it is implied that all backup sets are kept. Additionally, if the backup destination directory is full, the oldest backups are deleted until enough space is available.
+
+## Exclusion file
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial](https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
@@ -86,6 +92,10 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links \
 	--one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
+
+## No automatic backup expiration
+
+An option to diable the default behaviour to purge old backups when out of space. This option is set with the `--no-auto-expire` flag.
 	
 	
 ## How to restore
@@ -107,7 +117,7 @@ The script creates a backup in a regular directory so you can simply copy the fi
 
 The MIT License (MIT)
 
-Copyright (c) 2013-2017 Laurent Cozic
+Copyright (c) 2013-2018 Laurent Cozic
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

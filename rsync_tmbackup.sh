@@ -43,6 +43,11 @@ fn_display_usage() {
 	echo "                      not be managed by the script - in particular they will not be"
 	echo "                      automatically deleted."
 	echo "                      Default: $LOG_DIR"
+	echo " --strategy           Set the expiration strategy. Default: \"1:1 30:7 365:30\" means after one"
+	echo "                      day, keep one backup per day. After 30 days, keep one backup every 7 days."
+	echo "                      After 365 days keep one backup every 30 days."
+	echo " --no-auto-expire     Disable automatically deleting backups when out of space. Instead an error"
+	echo "                      is logged, and the backup is aborted."
 	echo ""
 	echo "For more detailed help, please see the README file:"
 	echo ""
@@ -81,6 +86,56 @@ fn_expire_backup() {
 
 	fn_log_info "Expiring $1"
 	fn_rm_dir "$1"
+}
+
+fn_expire_backups() {
+	local current_timestamp=$EPOCH
+	local last_kept_timestamp=9999999999
+
+	# Process each backup dir from most recent to oldest
+	for backup_dir in $(fn_find_backups | sort -r); do
+		local backup_date=$(basename "$backup_dir")
+		local backup_timestamp=$(fn_parse_date "$backup_date")
+
+		# Skip if failed to parse date...
+		if [ -z "$backup_timestamp" ]; then
+			fn_log_warn "Could not parse date: $backup_dir"
+			continue
+		fi
+
+		# Find which strategy token applies to this particular backup
+		for strategy_token in $(echo $EXPIRATION_STRATEGY | tr " " "\n" | sort -r -n); do
+			IFS=':' read -r -a t <<< "$strategy_token"
+
+			# After which date (relative to today) this token applies (X)
+			local cut_off_timestamp=$((current_timestamp - ${t[0]} * 86400))
+
+			# Every how many days should a backup be kept past the cut off date (Y)
+			local cut_off_interval=$((${t[1]} * 86400))
+
+			# If we've found the strategy token that applies to this backup
+			if [ "$backup_timestamp" -le "$cut_off_timestamp" ]; then
+
+				# Special case: if Y is "0" we delete every time
+				if [ $cut_off_interval -eq "0" ]; then
+					fn_expire_backup "$backup_dir"
+					break
+				fi
+
+				# Check if the current backup is in the interval between
+				# the last backup that was kept and Y
+				local interval_since_last_kept=$((last_kept_timestamp - backup_timestamp))
+				if [ "$interval_since_last_kept" -lt "$cut_off_interval" ]; then
+					# Yes: Delete that one
+					fn_expire_backup "$backup_dir"
+				else
+					# No: Keep it
+					last_kept_timestamp=$backup_timestamp
+				fi
+				break
+			fi
+		done
+	done
 }
 
 fn_parse_ssh() {
@@ -157,6 +212,8 @@ DEST_FOLDER=""
 EXCLUSION_FILE=""
 LOG_DIR="$HOME/.$APPNAME"
 AUTO_DELETE_LOG="1"
+EXPIRATION_STRATEGY="1:1 30:7 365:30"
+AUTO_EXPIRE="1"
 
 RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
@@ -179,10 +236,17 @@ while :; do
 			shift
 			RSYNC_FLAGS="$1"
 			;;
+		--strategy)
+			shift
+			EXPIRATION_STRATEGY="$1"
+			;;
 		--log-dir)
 			shift
 			LOG_DIR="$1"
 			AUTO_DELETE_LOG="0"
+			;;
+		--no-auto-expire)
+			AUTO_EXPIRE="0"
 			;;
 		--)
 			shift
@@ -359,30 +423,7 @@ while : ; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-	# Default value for $PREV ensures that the most recent backup is never deleted.
-	PREV="0000-00-00-000000"
-	for FILENAME in $(fn_find_backups | sort -r); do
-		BACKUP_DATE=$(basename "$FILENAME")
-		TIMESTAMP=$(fn_parse_date $BACKUP_DATE)
-
-		# Skip if failed to parse date...
-		if [ -z "$TIMESTAMP" ]; then
-			fn_log_warn "Could not parse date: $FILENAME"
-			continue
-		fi
-
-		if   [ $TIMESTAMP -ge $KEEP_ALL_DATE ]; then
-			true
-		elif [ $TIMESTAMP -ge $KEEP_DAILIES_DATE ]; then
-			# Delete all but the most recent of each day.
-			[ "${BACKUP_DATE:0:10}" == "${PREV:0:10}" ] && fn_expire_backup "$FILENAME"
-		else
-			# Delete all but the most recent of each month.
-			[ "${BACKUP_DATE:0:7}" == "${PREV:0:7}" ] && fn_expire_backup "$FILENAME"
-		fi
-
-		PREV=$BACKUP_DATE
-	done
+	fn_expire_backups
 
 	# -----------------------------------------------------------------------------
 	# Start backup
@@ -420,6 +461,12 @@ while : ; do
 	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
 
 	if [ -n "$NO_SPACE_LEFT" ]; then
+
+		if [[ $AUTO_EXPIRE == "0" ]]; then
+			fn_log_error "No space left on device, and automatic purging of old backups is disabled."
+			exit 1
+		fi
+
 		fn_log_warn "No space left on device - removing oldest backup and resuming."
 
 		if [[ "$(fn_find_backups | wc -l)" -lt "2" ]]; then
