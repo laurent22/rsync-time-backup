@@ -116,8 +116,8 @@ fn_expire_backups() {
 			# If we've found the strategy token that applies to this backup
 			if [ "$backup_timestamp" -le "$cut_off_timestamp" ]; then
 
-				# Special case: if Y is "0" we delete every time
-				if [ $cut_off_interval -eq "0" ]; then
+				# Special case: if Y is "0", "x" or "X" we delete every time
+				if [[ ($cut_off_interval -eq "0") || ($cut_off_interval -eq "x") || ($cut_off_interval -eq "X") ]]; then
 					fn_expire_backup "$backup_dir"
 					break
 				fi
