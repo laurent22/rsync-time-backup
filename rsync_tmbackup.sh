@@ -59,6 +59,7 @@ fn_parse_date() {
 	case "$OSTYPE" in
 		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		cygwin*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
+		netbsd*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		darwin8*) yy=`expr ${1:0:4}`
 			mm=`expr ${1:5:2} - 1`
 			dd=`expr ${1:8:2}`
@@ -369,6 +370,12 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 			fn_log_error "Previous backup task is still active - aborting (command: $RUNNINGCMD)."
 			exit 1
 		fi
+	elif [[ "$OSTYPE" == "netbsd"* ]]; then
+		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
+		if ps -axp "$RUNNINGPID" -o "command" | grep "$APPNAME" > /dev/null; then
+                        fn_log_error "Previous backup task is still active - aborting."
+                        exit 1
+                fi
 	else
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
 		if [ "$RUNNINGPID" = "$(pgrep -o -f "$APPNAME")" ]; then
