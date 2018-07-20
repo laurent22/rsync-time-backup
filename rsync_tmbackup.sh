@@ -356,7 +356,7 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
-	if [ "$OSTYPE" == "cygwin" ]; then
+	if [ "$OSTYPE" == "cygwin" -o "$OSTYPE" == "msys" ]; then
 		# 1. Grab the PID of previous run from the PID file
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
 
