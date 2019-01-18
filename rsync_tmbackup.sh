@@ -35,19 +35,21 @@ fn_display_usage() {
 	echo "Usage: $(basename $0) [OPTION]... <[USER@HOST:]SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]"
 	echo ""
 	echo "Options"
-	echo " -p, --port           SSH port."
-	echo " -h, --help           Display this help message."
-	echo " --rsync-get-flags    Display the default rsync flags that are used for backup."
-	echo " --rsync-set-flags    Set the rsync flags that are going to be used for backup."
-	echo " --log-dir            Set the log file directory. If this flag is set, generated files will"
-	echo "                      not be managed by the script - in particular they will not be"
-	echo "                      automatically deleted."
-	echo "                      Default: $LOG_DIR"
-	echo " --strategy           Set the expiration strategy. Default: \"1:1 30:7 365:30\" means after one"
-	echo "                      day, keep one backup per day. After 30 days, keep one backup every 7 days."
-	echo "                      After 365 days keep one backup every 30 days."
-	echo " --no-auto-expire     Disable automatically deleting backups when out of space. Instead an error"
-	echo "                      is logged, and the backup is aborted."
+	echo " -p, --port             SSH port."
+	echo " -h, --help             Display this help message."
+	echo " -i, --id_rsa           Specify the private ssh key to use."
+	echo " --rsync-get-flags      Display the default rsync flags that are used for backup."
+	echo " --rsync-set-flags      Set the rsync flags that are going to be used for backup."
+	echo " --rsync-append-flags   Append the rsync flags that are going to be used for backup."
+	echo " --log-dir              Set the log file directory. If this flag is set, generated files will"
+	echo "                        not be managed by the script - in particular they will not be"
+	echo "                        automatically deleted."
+	echo "                        Default: $LOG_DIR"
+	echo " --strategy             Set the expiration strategy. Default: \"1:1 30:7 365:30\" means after one"
+	echo "                        day, keep one backup per day. After 30 days, keep one backup every 7 days."
+	echo "                        After 365 days keep one backup every 30 days."
+	echo " --no-auto-expire       Disable automatically deleting backups when out of space. Instead an error"
+	echo "                        is logged, and the backup is aborted."
 	echo ""
 	echo "For more detailed help, please see the README file:"
 	echo ""
@@ -146,14 +148,22 @@ fn_parse_ssh() {
 		SSH_USER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
 		SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
 		SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
-		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+		if [ -n "$ID_RSA" ] ; then
+			SSH_CMD="ssh -p $SSH_PORT -i $ID_RSA ${SSH_USER}@${SSH_HOST}"
+		else
+			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+		fi
 		SSH_DEST_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
 	elif echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
 	then
 		SSH_USER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
 		SSH_HOST=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
 		SSH_SRC_FOLDER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
-		SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+		if [ -n "$ID_RSA" ] ; then
+			SSH_CMD="ssh -p $SSH_PORT -i $ID_RSA ${SSH_USER}@${SSH_HOST}"
+		else
+			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+		fi
 		SSH_SRC_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
 	fi
 }
@@ -207,6 +217,7 @@ SSH_CMD=""
 SSH_DEST_FOLDER_PREFIX=""
 SSH_SRC_FOLDER_PREFIX=""
 SSH_PORT="22"
+ID_RSA=""
 
 SRC_FOLDER=""
 DEST_FOLDER=""
@@ -228,6 +239,10 @@ while :; do
 			shift
 			SSH_PORT=$1
 			;;
+		-i|--id_rsa)
+			shift
+			ID_RSA="$1"
+			;;
 		--rsync-get-flags)
 			shift
 			echo $RSYNC_FLAGS
@@ -236,6 +251,10 @@ while :; do
 		--rsync-set-flags)
 			shift
 			RSYNC_FLAGS="$1"
+			;;
+		--rsync-append-flags)
+			shift
+			RSYNC_FLAGS="$RSYNC_FLAGS $1"
 			;;
 		--strategy)
 			shift
@@ -444,7 +463,11 @@ while : ; do
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
-		CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+		if [ -n "$ID_RSA" ] ; then
+			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+		else
+			CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+		fi
 	fi
 	CMD="$CMD $RSYNC_FLAGS"
 	CMD="$CMD --log-file '$LOG_FILE'"
