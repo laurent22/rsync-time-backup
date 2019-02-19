@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#set -x
 
 APPNAME=$(basename $0 | sed "s/\.sh$//")
 
@@ -38,6 +39,7 @@ fn_display_usage() {
 	echo " -p, --port             SSH port."
 	echo " -h, --help             Display this help message."
 	echo " -i, --id_rsa           Specify the private ssh key to use."
+	echo " -n, --dry-run          Performs a dry run, i.e. output without the backup (log files will be generated)"
 	echo " --rsync-get-flags      Display the default rsync flags that are used for backup."
 	echo " --rsync-set-flags      Set the rsync flags that are going to be used for backup."
 	echo " --rsync-append-flags   Append the rsync flags that are going to be used for backup."
@@ -88,7 +90,7 @@ fn_expire_backup() {
 	fi
 
 	fn_log_info "Expiring $1"
-	fn_rm_dir "$1"
+	[[ -z $DRY_RUN ]] && fn_rm_dir "$1"
 }
 
 fn_expire_backups() {
@@ -226,6 +228,7 @@ LOG_DIR="$HOME/.$APPNAME"
 AUTO_DELETE_LOG="1"
 EXPIRATION_STRATEGY="1:1 30:7 365:30"
 AUTO_EXPIRE="1"
+DRY_RUN=""
 
 RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
@@ -242,6 +245,10 @@ while :; do
 		-i|--id_rsa)
 			shift
 			ID_RSA="$1"
+			;;
+		-n|--dry-run)
+			DRY_RUN="--dry-run"
+			RSYNC_FLAGS="$RSYNC_FLAGS --dry-run"
 			;;
 		--rsync-get-flags)
 			shift
@@ -303,6 +310,8 @@ fi
 # but still something to keep in mind.
 # However, due to this behavior we delay stripping the last slash for
 # the source folder until after parsing for ssh usage.
+
+[[ -n $DRY_RUN ]] && fn_log_info "NOTE: THIS IS A DRY RUN. No backup, expiring, or linking will occur (logs will be generated)."
 
 DEST_FOLDER="${DEST_FOLDER%/}"
 
@@ -442,7 +451,7 @@ while : ; do
 
 	if [ -z "$(fn_find "$DEST -type d" 2>/dev/null)" ]; then
 		fn_log_info "Creating destination $SSH_DEST_FOLDER_PREFIX$DEST"
-		fn_mkdir "$DEST"
+		[[ -z $DRY_RUN ]] && fn_mkdir "$DEST"
 	fi
 
 	# -----------------------------------------------------------------------------
@@ -531,8 +540,11 @@ while : ; do
 	# Add symlink to last backup
 	# -----------------------------------------------------------------------------
 
-	fn_rm_file "$DEST_FOLDER/latest"
-	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+	if [[ -z $DRY_RUN ]]
+	then
+		fn_rm_file "$DEST_FOLDER/latest"
+		fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+	fi
 
 	fn_rm_file "$INPROGRESS_FILE"
 

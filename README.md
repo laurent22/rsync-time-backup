@@ -17,6 +17,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	Options
 	 -p, --port           SSH port.
 	 -h, --help           Display this help message.
+	 -n, --dry-run        Performs a dry run, i.e. output without the backup (log files will be generated)
 	 --rsync-get-flags    Display the default rsync flags that are used for backup.
 	 --rsync-set-flags    Set the rsync flags that are going to be used for backup.
 	 --log-dir            Set the log file directory. If this flag is set, generated files will
@@ -44,6 +45,8 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 * Automatically purge old backups - within 24 hours, all backups are kept. Within one month, the most recent backup for each day is kept. For all previous backups, the most recent of each month is kept.
 
 * "latest" symlink that points to the latest successful backup.
+
+* Configuration testing of the command may be performed using the `--dry-run` parameter.
 
 ## Examples
 	
