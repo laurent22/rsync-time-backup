@@ -39,6 +39,14 @@ fn_display_usage() {
 	echo " -h, --help             Display this help message."
 	echo " -i, --id_rsa           Specify the private ssh key to use."
 	echo " -n, --dry-run          Performs a dry run, i.e. output without the backup (log files will be generated)"
+  echo " -L, --follow <path>    Follow a specified symlink instead of copying it as a symlink. Declare this"
+	echo "                        for each path. Paths cannot contain any single quote characters."
+	echo "                        If using this option, the SOURCE and all followed symlink paths need to specify"
+	echo "                        where to start including what rsync calls 'implied paths', i.e., the parts of the"
+	echo "                        path that show up on the destination. To do this, place a dot-slash in the path"
+	echo "                        where you want it to start."
+	echo "                        Example: /foo/bar/baz/abc.txt will copy to /dest/foo/bar/baz/abc.txt, but"
+	echo "                               /foo/bar/./baz/abc.txt will copy to /dest/baz/abc.txt"
 	echo " --rsync-get-flags      Display the default rsync flags that are used for backup."
 	echo " --rsync-set-flags      Set the rsync flags that are going to be used for backup."
 	echo " --rsync-append-flags   Append the rsync flags that are going to be used for backup."
@@ -228,6 +236,7 @@ AUTO_DELETE_LOG="1"
 EXPIRATION_STRATEGY="1:1 30:7 365:30"
 AUTO_EXPIRE="1"
 DRY_RUN=""
+FOLLOW_SYMLINKS=""
 
 RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
@@ -248,6 +257,12 @@ while :; do
 		-n|--dry-run)
 			DRY_RUN="--dry-run"
 			RSYNC_FLAGS="$RSYNC_FLAGS --dry-run"
+			;;
+		-L|--follow)
+			shift
+			LINK="$1"
+			[[ "${LINK}" != */ ]] && LINK="${LINK}/"
+			FOLLOW_SYMLINKS="$FOLLOW_SYMLINKS '$LINK'"
 			;;
 		--rsync-get-flags)
 			shift
@@ -484,7 +499,8 @@ while : ; do
 		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
 	fi
 	CMD="$CMD $LINK_DEST_OPTION"
-	CMD="$CMD -- '$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/' '$SSH_DEST_FOLDER_PREFIX$DEST/'"
+	[[ -n "${FOLLOW_SYMLINKS// }" ]] && CMD="$CMD --relative "
+	CMD="$CMD -- '$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/' $FOLLOW_SYMLINKS '$SSH_DEST_FOLDER_PREFIX$DEST/'"
 
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"

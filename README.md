@@ -18,6 +18,14 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	 -p, --port           SSH port.
 	 -h, --help           Display this help message.
 	 -n, --dry-run        Performs a dry run, i.e. output without the backup (log files will be generated)
+	 -L, --follow <path>  Follow a specified symlink instead of copying it as a symlink. Declare this
+	                      for each path. Paths cannot contain any single quote characters.
+	                      If using this option, the SOURCE and all followed symlink paths need to specify
+	                      where to start including what rsync calls 'implied paths', i.e., the parts of the
+	                      path that show up on the destination. To do this, place a dot-slash in the path
+	                      where you want it to start.
+	                      Example: /foo/bar/baz/abc.txt will copy to /dest/foo/bar/baz/abc.txt, but
+	                             /foo/bar/./baz/abc.txt will copy to /dest/baz/abc.txt
 	 --rsync-get-flags    Display the default rsync flags that are used for backup.
 	 --rsync-set-flags    Set the rsync flags that are going to be used for backup.
 	 --log-dir            Set the log file directory. If this flag is set, generated files will
@@ -48,6 +56,8 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 * Configuration testing of the command may be performed using the `--dry-run` parameter.
 
+* Specify only the symlinks you want to follow with the `--follow <path>` or `-L <path>` parameter. See example below.
+
 ## Examples
 	
 * Backup the home folder to backup_drive
@@ -70,6 +80,18 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 * To mimic Time Machine's behaviour, a cron script can be setup to backup at regular interval. For example, the following cron job checks if the drive "/mnt/backup" is currently connected and, if it is, starts the backup. It does this check every 1 hour.
 
 		0 */1 * * * if [[ -d /mnt/backup ]]; then rsync_tmbackup.sh /home /mnt/backup; fi
+
+* Follow a symlink that normally is copied as a symlink. (This works well on a CYGWIN system where the local drives aren't technically symlinks, but mounted drives.) In this example, the `/home` folder is still backed up to `/mnt/backup_drive`. Say there's a symlink at `/home/some/folder` that you want to follow. Add it as to the parameters list with `-L` or `--follow`:
+
+    `rsync_tmbackup.sh -L /home/./some/folder/  /home/./  /mnt/backup_drive`
+
+    Note: this only works because of rsync's (>=3.0.0)  `--relative` parameter. A dot-slash must be placed before the path component in the SOURCE and follow paths that will be replicated on the destination (shuold be the same position). Read [more dettail here](https://ss64.com/bash/rsync_options.html).
+		
+    On a CYGWIN system, if multiple local drives are to be included in the backup, rsync will not automatically follow the folder mountpoints in `/cygdrive` to specificed drives. This method must be used in this case. For example, to backup both the C: and D: drives within cygwin (extra spaces for clarity):
+
+    `rsync_tmbackup.sh -L /cygdrive/./c/  -L /cygdrive/./d/  /home/./  /mnt/backup_drive`
+
+    Without the `./`, the files would be copied to `/mnt/backup_drive/cygwin/c` instead of `/mnt/backup_drive/c`. Lastly, the trailing slash after the dot is required if no folder comes after it (correct: `/home/./`, incorrect: `/home/.`). The trailing slash after a `--follow` symlink is usually required (this script will added it if missing), unless you have an exclusions text file that specifically mentions that folder with a trailing slash.
 
 ## Backup expiration logic
 
