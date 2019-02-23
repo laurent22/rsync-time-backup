@@ -95,7 +95,7 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 ## No automatic backup expiration
 
-An option to diable the default behaviour to purge old backups when out of space. This option is set with the `--no-auto-expire` flag.
+An option to disable the default behaviour to purge old backups when out of space. This option is set with the `--no-auto-expire` flag.
 	
 	
 ## How to restore
