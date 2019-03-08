@@ -154,8 +154,7 @@ fn_parse_ssh() {
 			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		fi
 		SSH_DEST_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
-	fi
-	if echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
+	elif echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
 	then
 		SSH_USER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
 		SSH_HOST=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
@@ -166,12 +165,6 @@ fn_parse_ssh() {
 			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		fi
 		SSH_SRC_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
-	fi
-	# Check if source and destination are both remote
-	if [[ -n "${SSH_SRC_FOLDER_PREFIX}" && -n "${SSH_DEST_FOLDER_PREFIX}" ]]; then
-		fn_log_error "Rsync copies files either to or from a remote host, or locally on the current host."
-		fn_log_error "The source and destination cannot both be remote - aborting."
-		exit 1
 	fi
 }
 
