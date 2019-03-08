@@ -154,7 +154,8 @@ fn_parse_ssh() {
 			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		fi
 		SSH_DEST_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
-	elif echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
+	fi
+	if echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
 	then
 		SSH_USER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
 		SSH_HOST=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
@@ -166,10 +167,25 @@ fn_parse_ssh() {
 		fi
 		SSH_SRC_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
 	fi
+	# Check if source and destination are both remote
+	if [[ -n "${SSH_SRC_FOLDER_PREFIX}" && -n "${SSH_DEST_FOLDER_PREFIX}" ]]; then
+		fn_log_error "Rsync copies files either to or from a remote host, or locally on the current host."
+		fn_log_error "The source and destination cannot both be remote - aborting."
+		exit 1
+	fi
 }
 
 fn_run_cmd() {
 	if [ -n "$SSH_DEST_FOLDER_PREFIX" ]
+	then
+		eval "$SSH_CMD '$1'"
+	else
+		eval $1
+	fi
+}
+
+fn_run_cmd_src() {
+	if [ -n "$SSH_SRC_FOLDER_PREFIX" ]
 	then
 		eval "$SSH_CMD '$1'"
 	else
@@ -204,6 +220,10 @@ fn_touch() {
 
 fn_ln() {
 	fn_run_cmd "ln -s -- '$1' '$2'"
+}
+
+fn_test_file_exists() {
+	fn_run_cmd_src "test -e '$1'"
 }
 
 # -----------------------------------------------------------------------------
@@ -314,6 +334,12 @@ fi
 
 if [ -n "$SSH_SRC_FOLDER" ]; then
 	SRC_FOLDER="$SSH_SRC_FOLDER"
+fi
+
+# Exit if source folder does not exist.
+if ! fn_test_file_exists ${SRC_FOLDER}; then
+	fn_log_error "Source folder \"${SRC_FOLDER}\" does not exist - aborting."
+	exit 1
 fi
 
 # Now strip off last slash from source folder.
