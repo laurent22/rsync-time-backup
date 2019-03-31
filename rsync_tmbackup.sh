@@ -133,10 +133,6 @@ fn_expire_backups() {
 					break
 				fi
 
-				# Check if the current backup is in the interval between
-				# the last backup that was kept and Y
-				local interval_since_last_kept=$((backup_timestamp - keep_last_kept_timestamp))
-
 				# for backup expiration condition we use absolute day values
 				local last_kept_timestamp_days=$((last_kept_timestamp / 86400))
 				local backup_timestamp_days=$((backup_timestamp / 86400))
@@ -144,6 +140,8 @@ fn_expire_backups() {
 
 				local cut_off_interval_days=$((cut_off_interval / 86400))
 
+				# Check if the current backup is in the interval between
+				# the last backup that was kept and Y
 				# to determine what to keep/delete we use days difference
 				if [ "$interval_since_last_kept_days" -lt "$cut_off_interval_days" ]; then
 
