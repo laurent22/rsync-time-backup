@@ -95,14 +95,22 @@ fn_expire_backups() {
 	local current_timestamp=$EPOCH
 	local last_kept_timestamp=9999999999
 
-	# Process each backup dir from most recent to oldest
-	for backup_dir in $(fn_find_backups | sort -r); do
+	# Process each backup dir from oldest to most recent
+	for backup_dir in $(fn_find_backups | sort); do
+
 		local backup_date=$(basename "$backup_dir")
 		local backup_timestamp=$(fn_parse_date "$backup_date")
 
 		# Skip if failed to parse date...
 		if [ -z "$backup_timestamp" ]; then
 			fn_log_warn "Could not parse date: $backup_dir"
+			continue
+		fi
+
+		# If this is the first "for" iteration backup_dir points to the oldest backup
+		if [ "$last_kept_timestamp" == "9999999999" ]; then
+			last_kept_timestamp=$backup_timestamp
+			# Never delete the oldest backup (unless no space - then auto-expire wil kick in). We skip processing it and go to the next one
 			continue
 		fi
 
@@ -127,15 +135,30 @@ fn_expire_backups() {
 
 				# Check if the current backup is in the interval between
 				# the last backup that was kept and Y
-				local interval_since_last_kept=$((last_kept_timestamp - backup_timestamp))
-				if [ "$interval_since_last_kept" -lt "$cut_off_interval" ]; then
+				local interval_since_last_kept=$((backup_timestamp - keep_last_kept_timestamp))
+
+				# for backup expiration condition we use absolute day values
+				local last_kept_timestamp_days=$((last_kept_timestamp / 86400))
+				local backup_timestamp_days=$((backup_timestamp / 86400))
+				local interval_since_last_kept_days=$((backup_timestamp_days - last_kept_timestamp_days))
+
+				local cut_off_interval_days=$((cut_off_interval / 86400))
+
+				# to determine what to keep/delete we use days difference
+				if [ "$interval_since_last_kept_days" -lt "$cut_off_interval_days" ]; then
+
 					# Yes: Delete that one
 					fn_expire_backup "$backup_dir"
+					# backup deleted no point to check shorter timespan strateggies - go to the next backup
+					break
+
 				else
-					# No: Keep it
+					
+					# No: Keep it.
 					last_kept_timestamp=$backup_timestamp
+					# and go to the next backup
+					break
 				fi
-				break
 			fi
 		done
 	done
