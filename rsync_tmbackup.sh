@@ -151,7 +151,7 @@ fn_expire_backups() {
 					break
 
 				else
-					
+
 					# No: Keep it.
 					last_kept_timestamp=$backup_timestamp
 					# and go to the next backup
