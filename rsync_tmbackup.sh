@@ -422,7 +422,7 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 		then
 			fn_log_error "Previous backup task is still active - aborting."
 			exit 1
-		fi		
+		fi
 	fi
 
 	if [ -n "$PREVIOUS_DEST" ]; then
