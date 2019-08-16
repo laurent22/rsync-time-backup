@@ -464,7 +464,7 @@ while : ; do
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
-	    $RSYNC_FLAGS="$RSYNC_FLAGS --compress"
+		$RSYNC_FLAGS="$RSYNC_FLAGS --compress"
 		if [ -n "$ID_RSA" ] ; then
 			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 		else
