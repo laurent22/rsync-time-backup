@@ -227,7 +227,7 @@ AUTO_DELETE_LOG="1"
 EXPIRATION_STRATEGY="1:1 30:7 365:30"
 AUTO_EXPIRE="1"
 
-RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
+RSYNC_FLAGS="-D --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
 while :; do
 	case $1 in
@@ -246,6 +246,7 @@ while :; do
 		--rsync-get-flags)
 			shift
 			echo $RSYNC_FLAGS
+			echo "if using remote drive over SSH, --compress will be added"
 			exit
 			;;
 		--rsync-set-flags)
@@ -463,6 +464,7 @@ while : ; do
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
+		$RSYNC_FLAGS="$RSYNC_FLAGS --compress"
 		if [ -n "$ID_RSA" ] ; then
 			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 		else
