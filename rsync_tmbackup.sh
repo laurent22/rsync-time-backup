@@ -38,7 +38,8 @@ fn_display_usage() {
 	echo " -p, --port             SSH port."
 	echo " -h, --help             Display this help message."
 	echo " -i, --id_rsa           Specify the private ssh key to use."
-	echo " --rsync-get-flags      Display the default rsync flags that are used for backup."
+	echo " --rsync-get-flags      Display the default rsync flags that are used for backup. If using remote"
+	echo "                        drive over SSH, --compress will be added."
 	echo " --rsync-set-flags      Set the rsync flags that are going to be used for backup."
 	echo " --rsync-append-flags   Append the rsync flags that are going to be used for backup."
 	echo " --log-dir              Set the log file directory. If this flag is set, generated files will"
@@ -246,7 +247,6 @@ while :; do
 		--rsync-get-flags)
 			shift
 			echo $RSYNC_FLAGS
-			echo "if using remote drive over SSH, --compress will be added"
 			exit
 			;;
 		--rsync-set-flags)
