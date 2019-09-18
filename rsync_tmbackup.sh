@@ -77,7 +77,7 @@ fn_parse_date() {
 }
 
 fn_find_backups() {
-	fn_run_cmd "find "$DEST_FOLDER/" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
+	fn_run_cmd "find "\'$DEST_FOLDER/\'" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
 }
 
 fn_expire_backup() {
@@ -374,10 +374,10 @@ fi
 # Handle case where a previous backup failed or was interrupted.
 # -----------------------------------------------------------------------------
 
-if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
+if [ -n "$(fn_find "\"$INPROGRESS_FILE\"")" ]; then
 	if [ "$OSTYPE" == "cygwin" ]; then
 		# 1. Grab the PID of previous run from the PID file
-		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
+		RUNNINGPID="$(fn_run_cmd "cat \"$INPROGRESS_FILE\"")"
 
 		# 2. Get the command for the process currently running under that PID and look for our script name
 		RUNNINGCMD="$(procps -wwfo cmd -p $RUNNINGPID --no-headers | grep "$APPNAME")"
@@ -397,7 +397,7 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
                         exit 1
                 fi
 	else
-		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
+		RUNNINGPID="$(fn_run_cmd "cat \"$INPROGRESS_FILE\"")"
 		if [ "$RUNNINGPID" = "$(pgrep -o -f "$APPNAME")" ]; then
 			fn_log_error "Previous backup task is still active - aborting."
 			exit 1
@@ -415,7 +415,7 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 			PREVIOUS_DEST=""
 		fi
 		# update PID to current process to avoid multiple concurrent resumes
-		fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
+		fn_run_cmd "echo $MYPID > \"$INPROGRESS_FILE\""
 	fi
 fi
 
@@ -483,7 +483,7 @@ while : ; do
 	fn_log_info "Running command:"
 	fn_log_info "$CMD"
 
-	fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
+	fn_run_cmd "echo $MYPID > \"$INPROGRESS_FILE\""
 	eval $CMD
 
 	# -----------------------------------------------------------------------------
@@ -536,7 +536,7 @@ while : ; do
 	fn_rm_file "$DEST_FOLDER/latest"
 	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
 
-	fn_rm_file "$INPROGRESS_FILE"
+	fn_rm_file "\"$INPROGRESS_FILE\""
 
 	exit $EXIT_CODE
 done
