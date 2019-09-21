@@ -96,6 +96,11 @@ fn_expire_backups() {
 	local current_timestamp=$EPOCH
 	local last_kept_timestamp=9999999999
 
+        # we will keep requested backup
+        BACKUP_TO_KEEP="$1"
+        # we will also keep the oldest backup
+        OLDEST_BACKUP_TO_KEEP="$(fn_find_backups | sort | sed -n '1p')"
+
 	# Process each backup dir from the oldest to the most recent
 	for backup_dir in $(fn_find_backups | sort); do
 
@@ -108,13 +113,17 @@ fn_expire_backups() {
 			continue
 		fi
 
-		# If this is the first "for" iteration backup_dir points to the oldest backup
-		if [ "$last_kept_timestamp" == "9999999999" ]; then
-			# We dont't want to delete the oldest backup. It becomes first "last kept" backup
-			last_kept_timestamp=$backup_timestamp
-			# As we keep it we can skip processing it and go to the next oldest one
-			continue
-		fi
+                if [ "$backup_dir" == "$BACKUP_TO_KEEP" ]; then
+                        # this is the latest backup requsted to be kept. We can finish pruning
+                        break
+                fi
+
+                if [ "$backup_dir" == "$OLDEST_BACKUP_TO_KEEP" ]; then
+                       # We dont't want to delete the oldest backup. It becomes first "last kept" backup
+                       last_kept_timestamp=$backup_timestamp
+                       # As we keep it we can skip processing it and go to the next oldest one in the loop
+                       continue
+                fi
 
 		# Find which strategy token applies to this particular backup
 		for strategy_token in $(echo $EXPIRATION_STRATEGY | tr " " "\n" | sort -r -n); do
@@ -162,6 +171,7 @@ fn_expire_backups() {
 		done
 	done
 }
+
 fn_parse_ssh() {
 	# To keep compatibility with bash version < 3, we use grep
 	if echo "$DEST_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
@@ -470,7 +480,13 @@ while : ; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-	fn_expire_backups
+        if [ -z "$PREVIOUS_DEST" ]; then
+                # regardless of expiry strategy keep backup used for --link-dest
+                fn_expire_backups "$PREVIOUS_DEST"
+        else
+                # keep latest backup
+                fn_expire_backups "$DEST"
+        fi
 
 	# -----------------------------------------------------------------------------
 	# Start backup
