@@ -47,6 +47,9 @@ fn_display_usage() {
 	echo "                        where you want it to start."
 	echo "                        Example: /foo/bar/baz/abc.txt will copy to /dest/foo/bar/baz/abc.txt, but"
 	echo "                               /foo/bar/./baz/abc.txt will copy to /dest/baz/abc.txt"
+	echo " --rpath=/path/rsync    Specifies the location of rsync binary on remote system.  Can often fix"
+	echo "                               Permission Denied problems"
+
 	echo " --rsync-get-flags      Display the default rsync flags that are used for backup."
 	echo " --rsync-set-flags      Set the rsync flags that are going to be used for backup."
 	echo " --rsync-append-flags   Append the rsync flags that are going to be used for backup."
@@ -237,6 +240,7 @@ EXPIRATION_STRATEGY="1:1 30:7 365:30"
 AUTO_EXPIRE="1"
 DRY_RUN=""
 FOLLOW_SYMLINKS=""
+RSYNC_PATH=""
 
 RSYNC_FLAGS="-D --compress --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
@@ -257,6 +261,10 @@ while :; do
 		-n|--dry-run)
 			DRY_RUN="--dry-run"
 			RSYNC_FLAGS="$RSYNC_FLAGS --dry-run"
+			;;
+		--rpath)
+			shift
+			RSYNC_PATH="$1"
 			;;
 		-L|--follow)
 			shift
@@ -486,7 +494,8 @@ while : ; do
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
-		if [ -n "$ID_RSA" ] ; then
+		CMD="$CMD ${RSYNC_PATH:+--rsync-path=$RSYNC_PATH}"
+    if [ -n "$ID_RSA" ] ; then
 			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 		else
 			CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
