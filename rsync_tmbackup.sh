@@ -480,7 +480,7 @@ while : ; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-        if [ -z "$PREVIOUS_DEST" ]; then
+        if [ -n "$PREVIOUS_DEST" ]; then
                 # regardless of expiry strategy keep backup used for --link-dest
                 fn_expire_backups "$PREVIOUS_DEST"
         else
