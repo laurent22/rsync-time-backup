@@ -398,7 +398,8 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
                 fi
 	else
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
-		if [ "$RUNNINGPID" = "$(pgrep -o -f "$APPNAME")" ]; then
+		RUNNINGPIDBASENAME="$(basename $(ps -p $RUNNINGPID -o cmd= | cut -d " " -f 2) 2>/dev/null)"
+		if [ "${RUNNINGPIDBASENAME}" = "$(basename $0)" ]; then
 			fn_log_error "Previous backup task is still active - aborting."
 			exit 1
 		fi
