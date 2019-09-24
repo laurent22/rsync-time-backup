@@ -21,6 +21,9 @@ if ($backupsPerDay === 1) {
 	throw new Exception('Not implemented');
 }
 
+mkdir($destDir);
+touch($destDir . '/backup.marker');
+
 $d = new DateTime();
 $d->sub(new DateInterval('P' . $totalDays . 'D'));
 

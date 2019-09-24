@@ -70,13 +70,20 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 ## Backup expiration logic
 
-Backup sets are automatically deleted following a simple expiration strategy defined with the `--strategy` flag. This strategy is a series of time intervals with each item being defined as `x:y`, which means "after x days, keep one backup every y days". The default strategy is `1:1 30:7 365:30`, which means:
+Backup sets are automatically deleted following a simple expiration strategy defined with the `--strategy` flag. This strategy is a series of time intervals with each item being defined as `x:y`, which means "after x days, keep one backup every y days". The value y can either be a positive integer or the character `x`.
+
+ The default strategy is `1:1 30:7 365:30`, which means:
 
 - After **1** day, keep one backup every **1** day (**1:1**).
 - After **30** days, keep one backup every **7** days (**30:7**).
 - After **365** days, keep one backup every **30** days (**365:30**).
 
 Before the first interval (i.e. by default within the first 24h) it is implied that all backup sets are kept. Additionally, if the backup destination directory is full, the oldest backups are deleted until enough space is available.
+
+An example of a backup strategy using `x` is givne by `1:1 50:x`, which means:
+
+- After **1** day, keep one backup every **1** day (**1:1**).
+- After **50** days, no longer keep backups.
 
 ## Exclusion file
 
