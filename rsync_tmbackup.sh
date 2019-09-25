@@ -96,8 +96,14 @@ fn_expire_backups() {
 	local current_timestamp=$EPOCH
 	local last_kept_timestamp=9999999999
 
-	# Process each backup dir from most recent to oldest
-	for backup_dir in $(fn_find_backups | sort -r); do
+        # we will keep requested backup
+        backup_to_keep="$1"
+        # we will also keep the oldest backup
+        oldest_backup_to_keep="$(fn_find_backups | sort | sed -n '1p')"
+
+	# Process each backup dir from the oldest to the most recent
+	for backup_dir in $(fn_find_backups | sort); do
+
 		local backup_date=$(basename "$backup_dir")
 		local backup_timestamp=$(fn_parse_date "$backup_date")
 
@@ -107,36 +113,60 @@ fn_expire_backups() {
 			continue
 		fi
 
+                if [ "$backup_dir" == "$backup_to_keep" ]; then
+                        # this is the latest backup requsted to be kept. We can finish pruning
+                        break
+                fi
+
+                if [ "$backup_dir" == "$oldest_backup_to_keep" ]; then
+                       # We dont't want to delete the oldest backup. It becomes first "last kept" backup
+                       last_kept_timestamp=$backup_timestamp
+                       # As we keep it we can skip processing it and go to the next oldest one in the loop
+                       continue
+                fi
+
 		# Find which strategy token applies to this particular backup
 		for strategy_token in $(echo $EXPIRATION_STRATEGY | tr " " "\n" | sort -r -n); do
 			IFS=':' read -r -a t <<< "$strategy_token"
 
-			# After which date (relative to today) this token applies (X)
+			# After which date (relative to today) this token applies (X) - we use seconds to get exact cut off time
 			local cut_off_timestamp=$((current_timestamp - ${t[0]} * 86400))
 
-			# Every how many days should a backup be kept past the cut off date (Y)
-			local cut_off_interval=$((${t[1]} * 86400))
+			# Every how many days should a backup be kept past the cut off date (Y) - we use days (not seconds)
+			local cut_off_interval_days=$((${t[1]}))
 
 			# If we've found the strategy token that applies to this backup
 			if [ "$backup_timestamp" -le "$cut_off_timestamp" ]; then
 
 				# Special case: if Y is "0" we delete every time
-				if [ $cut_off_interval -eq "0" ]; then
+				if [ $cut_off_interval_days -eq "0" ]; then
 					fn_expire_backup "$backup_dir"
 					break
 				fi
 
+				# we calculate days number since last kept backup
+				local last_kept_timestamp_days=$((last_kept_timestamp / 86400))
+				local backup_timestamp_days=$((backup_timestamp / 86400))
+				local interval_since_last_kept_days=$((backup_timestamp_days - last_kept_timestamp_days))
+
 				# Check if the current backup is in the interval between
 				# the last backup that was kept and Y
-				local interval_since_last_kept=$((last_kept_timestamp - backup_timestamp))
-				if [ "$interval_since_last_kept" -lt "$cut_off_interval" ]; then
+				# to determine what to keep/delete we use days difference
+				if [ "$interval_since_last_kept_days" -lt "$cut_off_interval_days" ]; then
+
 					# Yes: Delete that one
 					fn_expire_backup "$backup_dir"
+					# backup deleted no point to check shorter timespan strategies - go to the next backup
+					break
+
 				else
-					# No: Keep it
+
+					# No: Keep it.
+					# this is now the last kept backup
 					last_kept_timestamp=$backup_timestamp
+					# and go to the next backup
+					break
 				fi
-				break
 			fi
 		done
 	done
@@ -450,7 +480,13 @@ while : ; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-	fn_expire_backups
+        if [ -n "$PREVIOUS_DEST" ]; then
+                # regardless of expiry strategy keep backup used for --link-dest
+                fn_expire_backups "$PREVIOUS_DEST"
+        else
+                # keep latest backup
+                fn_expire_backups "$DEST"
+        fi
 
 	# -----------------------------------------------------------------------------
 	# Start backup
