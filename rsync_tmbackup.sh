@@ -97,9 +97,9 @@ fn_expire_backups() {
 	local last_kept_timestamp=9999999999
 
         # we will keep requested backup
-        BACKUP_TO_KEEP="$1"
+        backup_to_keep="$1"
         # we will also keep the oldest backup
-        OLDEST_BACKUP_TO_KEEP="$(fn_find_backups | sort | sed -n '1p')"
+        oldest_backup_to_keep="$(fn_find_backups | sort | sed -n '1p')"
 
 	# Process each backup dir from the oldest to the most recent
 	for backup_dir in $(fn_find_backups | sort); do
@@ -113,12 +113,12 @@ fn_expire_backups() {
 			continue
 		fi
 
-                if [ "$backup_dir" == "$BACKUP_TO_KEEP" ]; then
+                if [ "$backup_dir" == "$backup_to_keep" ]; then
                         # this is the latest backup requsted to be kept. We can finish pruning
                         break
                 fi
 
-                if [ "$backup_dir" == "$OLDEST_BACKUP_TO_KEEP" ]; then
+                if [ "$backup_dir" == "$oldest_backup_to_keep" ]; then
                        # We dont't want to delete the oldest backup. It becomes first "last kept" backup
                        last_kept_timestamp=$backup_timestamp
                        # As we keep it we can skip processing it and go to the next oldest one in the loop
