@@ -96,10 +96,10 @@ fn_expire_backups() {
 	local current_timestamp=$EPOCH
 	local last_kept_timestamp=9999999999
 
-        # we will keep requested backup
-        backup_to_keep="$1"
-        # we will also keep the oldest backup
-        oldest_backup_to_keep="$(fn_find_backups | sort | sed -n '1p')"
+		# we will keep requested backup
+		backup_to_keep="$1"
+		# we will also keep the oldest backup
+		oldest_backup_to_keep="$(fn_find_backups | sort | sed -n '1p')"
 
 	# Process each backup dir from the oldest to the most recent
 	for backup_dir in $(fn_find_backups | sort); do
@@ -113,17 +113,17 @@ fn_expire_backups() {
 			continue
 		fi
 
-                if [ "$backup_dir" == "$backup_to_keep" ]; then
-                        # this is the latest backup requsted to be kept. We can finish pruning
-                        break
-                fi
+				if [ "$backup_dir" == "$backup_to_keep" ]; then
+						# this is the latest backup requsted to be kept. We can finish pruning
+						break
+				fi
 
-                if [ "$backup_dir" == "$oldest_backup_to_keep" ]; then
-                       # We dont't want to delete the oldest backup. It becomes first "last kept" backup
-                       last_kept_timestamp=$backup_timestamp
-                       # As we keep it we can skip processing it and go to the next oldest one in the loop
-                       continue
-                fi
+				if [ "$backup_dir" == "$oldest_backup_to_keep" ]; then
+					   # We dont't want to delete the oldest backup. It becomes first "last kept" backup
+					   last_kept_timestamp=$backup_timestamp
+					   # As we keep it we can skip processing it and go to the next oldest one in the loop
+					   continue
+				fi
 
 		# Find which strategy token applies to this particular backup
 		for strategy_token in $(echo $EXPIRATION_STRATEGY | tr " " "\n" | sort -r -n); do
@@ -423,9 +423,9 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 	elif [[ "$OSTYPE" == "netbsd"* ]]; then
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
 		if ps -axp "$RUNNINGPID" -o "command" | grep "$APPNAME" > /dev/null; then
-                        fn_log_error "Previous backup task is still active - aborting."
-                        exit 1
-                fi
+						fn_log_error "Previous backup task is still active - aborting."
+						exit 1
+				fi
 	else
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
 		if [ "$RUNNINGPID" = "$(pgrep -o -f "$APPNAME")" ]; then
@@ -480,13 +480,13 @@ while : ; do
 	# Purge certain old backups before beginning new backup.
 	# -----------------------------------------------------------------------------
 
-        if [ -n "$PREVIOUS_DEST" ]; then
-                # regardless of expiry strategy keep backup used for --link-dest
-                fn_expire_backups "$PREVIOUS_DEST"
-        else
-                # keep latest backup
-                fn_expire_backups "$DEST"
-        fi
+		if [ -n "$PREVIOUS_DEST" ]; then
+				# regardless of expiry strategy keep backup used for --link-dest
+				fn_expire_backups "$PREVIOUS_DEST"
+		else
+				# keep latest backup
+				fn_expire_backups "$DEST"
+		fi
 
 	# -----------------------------------------------------------------------------
 	# Start backup
