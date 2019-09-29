@@ -208,6 +208,15 @@ fn_run_cmd() {
 	fi
 }
 
+fn_run_cmd_src() {
+	if [ -n "$SSH_SRC_FOLDER_PREFIX" ]
+	then
+		eval "$SSH_CMD '$1'"
+	else
+		eval $1
+	fi
+}
+
 fn_find() {
 	fn_run_cmd "find '$1'"  2>/dev/null
 }
@@ -235,6 +244,18 @@ fn_touch() {
 
 fn_ln() {
 	fn_run_cmd "ln -s -- '$1' '$2'"
+}
+
+fn_test_file_exists_src() {
+	fn_run_cmd_src "test -e '$1'"
+}
+
+fn_df_t_src() {
+	fn_run_cmd_src "df -T '${1}'"
+}
+
+fn_df_t() {
+	fn_run_cmd "df -T '${1}'"
 }
 
 # -----------------------------------------------------------------------------
@@ -347,6 +368,12 @@ if [ -n "$SSH_SRC_FOLDER" ]; then
 	SRC_FOLDER="$SSH_SRC_FOLDER"
 fi
 
+# Exit if source folder does not exist.
+if ! fn_test_file_exists_src ${SRC_FOLDER}; then
+	fn_log_error "Source folder \"${SRC_FOLDER}\" does not exist - aborting."
+	exit 1
+fi
+
 # Now strip off last slash from source folder.
 SRC_FOLDER="${SRC_FOLDER%/}"
 
@@ -373,6 +400,22 @@ if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
 	fn_log_info_cmd "mkdir -p -- \"$DEST_FOLDER\" ; touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
 	fn_log_info ""
 	exit 1
+fi
+
+# Check source and destination file-system (df -T /dest). 
+# If one of them is FAT, use the --modify-window rsync parameter 
+# (see man rsync) with a value of 1 or 2.
+#
+# The check is performed by taking the second row
+# of the output of the first command.
+if [[ "$(fn_df_t_src "${SRC_FOLDER}" | awk '{print $2}' | grep -c -i -e "fat")" -gt 0 ]]; then
+	fn_log_info "Source file-system is a version of FAT."
+	fn_log_info "Using the --modify-window rsync parameter with value 2."
+	RSYNC_FLAGS="${RSYNC_FLAGS} --modify-window=2"
+elif [[ "$(fn_df_t "${DEST_FOLDER}" | awk '{print $2}' | grep -c -i -e "fat")" -gt 0 ]]; then
+	fn_log_info "Destination file-system is a version of FAT."
+	fn_log_info "Using the --modify-window rsync parameter with value 2."
+	RSYNC_FLAGS="${RSYNC_FLAGS} --modify-window=2"
 fi
 
 # -----------------------------------------------------------------------------
