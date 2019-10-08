@@ -71,7 +71,7 @@ fn_parse_date() {
 			ss=`expr ${1:15:2}`
 			# Because under MacOS X Tiger 'date -j' doesn't work, we do this:
 			perl -e 'use Time::Local; print timelocal('$ss','$mi','$hh','$dd','$mm','$yy'),"\n";' ;;
-		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+		darwin*) /bin/date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
 		FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
 	esac
 }
