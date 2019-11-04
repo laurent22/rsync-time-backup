@@ -51,6 +51,7 @@ fn_display_usage() {
 	echo "                        After 365 days keep one backup every 30 days."
 	echo " --no-auto-expire       Disable automatically deleting backups when out of space. Instead an error"
 	echo "                        is logged, and the backup is aborted."
+	echo " --ssh-bin              Specify the name of the ssh binary."
 	echo ""
 	echo "For more detailed help, please see the README file:"
 	echo ""
@@ -180,9 +181,9 @@ fn_parse_ssh() {
 		SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
 		SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
 		if [ -n "$ID_RSA" ] ; then
-			SSH_CMD="ssh -p $SSH_PORT -i $ID_RSA ${SSH_USER}@${SSH_HOST}"
+			SSH_CMD="$SSH_BIN -p $SSH_PORT -i $ID_RSA ${SSH_USER}@${SSH_HOST}"
 		else
-			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+			SSH_CMD="$SSH_BIN -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		fi
 		SSH_DEST_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
 	elif echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
@@ -191,9 +192,9 @@ fn_parse_ssh() {
 		SSH_HOST=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
 		SSH_SRC_FOLDER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
 		if [ -n "$ID_RSA" ] ; then
-			SSH_CMD="ssh -p $SSH_PORT -i $ID_RSA ${SSH_USER}@${SSH_HOST}"
+			SSH_CMD="$SSH_BIN -p $SSH_PORT -i $ID_RSA ${SSH_USER}@${SSH_HOST}"
 		else
-			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+			SSH_CMD="$SSH_BIN -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
 		fi
 		SSH_SRC_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
 	fi
@@ -266,6 +267,7 @@ SSH_HOST=""
 SSH_DEST_FOLDER=""
 SSH_SRC_FOLDER=""
 SSH_CMD=""
+SSH_BIN=""
 SSH_DEST_FOLDER_PREFIX=""
 SSH_SRC_FOLDER_PREFIX=""
 SSH_PORT="22"
@@ -320,6 +322,10 @@ while :; do
 		--no-auto-expire)
 			AUTO_EXPIRE="0"
 			;;
+		--ssh-bin)
+			shift
+			SSH_BIN="$1"
+			;;
 		--)
 			shift
 			SRC_FOLDER="$1"
@@ -357,6 +363,10 @@ fi
 # the source folder until after parsing for ssh usage.
 
 DEST_FOLDER="${DEST_FOLDER%/}"
+
+if [ -z "$SSH_BIN" ]; then
+	SSH_BIN="ssh"
+fi
 
 fn_parse_ssh
 
@@ -546,9 +556,9 @@ while : ; do
 	if [ -n "$SSH_CMD" ]; then
 		$RSYNC_FLAGS="$RSYNC_FLAGS --compress"
 		if [ -n "$ID_RSA" ] ; then
-			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+			CMD="$CMD  -e '$SSH_BIN -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 		else
-			CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+			CMD="$CMD  -e '$SSH_BIN -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 		fi
 	fi
 	CMD="$CMD $RSYNC_FLAGS"
