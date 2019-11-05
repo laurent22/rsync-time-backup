@@ -62,6 +62,7 @@ fn_parse_date() {
 	case "$OSTYPE" in
 		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		cygwin*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
+		msys*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		netbsd*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		darwin8*) yy=`expr ${1:0:4}`
 			mm=`expr ${1:5:2} - 1`
@@ -448,7 +449,7 @@ fi
 # -----------------------------------------------------------------------------
 
 if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
-	if [ "$OSTYPE" == "cygwin" ]; then
+	if [ "$OSTYPE" == "cygwin" -o "$OSTYPE" == "msys" ]; then
 		# 1. Grab the PID of previous run from the PID file
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
 
