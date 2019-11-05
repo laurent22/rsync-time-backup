@@ -402,8 +402,8 @@ if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
 	exit 1
 fi
 
-# Check source and destination file-system (df -T /dest). 
-# If one of them is FAT, use the --modify-window rsync parameter 
+# Check source and destination file-system (df -T /dest).
+# If one of them is FAT, use the --modify-window rsync parameter
 # (see man rsync) with a value of 1 or 2.
 #
 # The check is performed by taking the second row
@@ -544,7 +544,7 @@ while : ; do
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
-		$RSYNC_FLAGS="$RSYNC_FLAGS --compress"
+		RSYNC_FLAGS="$RSYNC_FLAGS --compress"
 		if [ -n "$ID_RSA" ] ; then
 			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 		else
