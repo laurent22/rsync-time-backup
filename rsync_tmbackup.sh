@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-APPNAME=$(basename $0 | sed "s/\.sh$//")
+APPNAME=$(basename "$0" | sed "s/\.sh$//")
 
 # -----------------------------------------------------------------------------
 # Log functions
@@ -32,7 +32,7 @@ trap 'fn_terminate_script' SIGINT
 # Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 fn_display_usage() {
-	echo "Usage: $(basename $0) [OPTION]... <[USER@HOST:]SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]"
+	echo "Usage: $(basename "$0") [OPTION]... <[USER@HOST:]SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]"
 	echo ""
 	echo "Options"
 	echo " -p, --port             SSH port."
@@ -77,7 +77,7 @@ fn_parse_date() {
 }
 
 fn_find_backups() {
-	fn_run_cmd "find "$DEST_FOLDER/" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
+	fn_run_cmd "find \"$DEST_FOLDER/\" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
 }
 
 fn_expire_backup() {
@@ -126,7 +126,7 @@ fn_expire_backups() {
 				fi
 
 		# Find which strategy token applies to this particular backup
-		for strategy_token in $(echo $EXPIRATION_STRATEGY | tr " " "\n" | sort -r -n); do
+		for strategy_token in $(echo "${EXPIRATION_STRATEGY}" | tr " " "\n" | sort -r -n); do
 			IFS=':' read -r -a t <<< "$strategy_token"
 
 			# After which date (relative to today) this token applies (X) - we use seconds to get exact cut off time
@@ -204,7 +204,7 @@ fn_run_cmd() {
 	then
 		eval "$SSH_CMD '$1'"
 	else
-		eval $1
+		eval "$1"
 	fi
 }
 
@@ -213,7 +213,7 @@ fn_run_cmd_src() {
 	then
 		eval "$SSH_CMD '$1'"
 	else
-		eval $1
+		eval "$1"
 	fi
 }
 
@@ -297,7 +297,7 @@ while :; do
 			;;
 		--rsync-get-flags)
 			shift
-			echo $RSYNC_FLAGS
+			echo "${RSYNC_FLAGS}"
 			exit
 			;;
 		--rsync-set-flags)
@@ -453,7 +453,7 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 		RUNNINGPID="$(fn_run_cmd "cat $INPROGRESS_FILE")"
 
 		# 2. Get the command for the process currently running under that PID and look for our script name
-		RUNNINGCMD="$(procps -wwfo cmd -p $RUNNINGPID --no-headers | grep "$APPNAME")"
+		RUNNINGCMD="$(procps -wwfo cmd -p "${RUNNINGPID}" --no-headers | grep "${APPNAME}")"
 
 		# 3. Grab the exit code from grep (0=found, 1=not found)
 		GREPCODE=$?
@@ -564,7 +564,7 @@ while : ; do
 	fn_log_info "$CMD"
 
 	fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
-	eval $CMD
+	eval "${CMD}"
 
 	# -----------------------------------------------------------------------------
 	# Check if we ran out of space
