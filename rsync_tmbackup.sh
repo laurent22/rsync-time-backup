@@ -130,10 +130,10 @@ fn_expire_backups() {
 			IFS=':' read -r -a t <<< "$strategy_token"
 
 			# After which date (relative to today) this token applies (X) - we use seconds to get exact cut off time
-			local cut_off_timestamp=$((current_timestamp - ${t[0]} * 86400))
+			local cut_off_timestamp=$((current_timestamp - t[0] * 86400))
 
 			# Every how many days should a backup be kept past the cut off date (Y) - we use days (not seconds)
-			local cut_off_interval_days=$((${t[1]}))
+			local cut_off_interval_days=$((t[1]))
 
 			# If we've found the strategy token that applies to this backup
 			if [ "$backup_timestamp" -le "$cut_off_timestamp" ]; then
