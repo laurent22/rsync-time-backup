@@ -104,8 +104,10 @@ fn_expire_backups() {
     # Process each backup dir from the oldest to the most recent
     for backup_dir in $(fn_find_backups | sort); do
 
-        local backup_date=$(basename "$backup_dir")
-        local backup_timestamp=$(fn_parse_date "$backup_date")
+        local backup_date
+        backup_date=$(basename "$backup_dir")
+        local backup_timestamp
+        backup_timestamp=$(fn_parse_date "$backup_date")
 
         # Skip if failed to parse date...
         if [[ -z "$backup_timestamp" ]]; then
