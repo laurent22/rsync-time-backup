@@ -485,10 +485,10 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		fn_log_info "$SSH_DEST_FOLDER_PREFIX$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
 		fn_run_cmd "mv -- $PREVIOUS_DEST_RUNNING $DEST"
-		# update PID to current process to avoid multiple concurrent resumes
-		fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
 	fi
 fi
+# update PID to current process to avoid multiple concurrent runs
+fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
 
 # Run in a loop to handle the "No space left on device" logic.
 while : ; do
