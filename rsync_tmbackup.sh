@@ -77,7 +77,7 @@ fn_parse_date() {
 }
 
 fn_find_backups() {
-	fn_run_cmd "find "$DEST_FOLDER/" -maxdepth 1 -type d -name \"????-??-??-??????\" -prune | sort -r"
+	fn_run_cmd "find "$DEST_FOLDER/" -maxdepth 1 -type d -name \"$1????-??-??-??????\" -prune | sort -r"
 }
 
 fn_expire_backup() {
@@ -429,7 +429,8 @@ KEEP_ALL_DATE=$((EPOCH - 86400))       # 1 day ago
 KEEP_DAILIES_DATE=$((EPOCH - 2678400)) # 31 days ago
 
 export IFS=$'\n' # Better for handling spaces in filenames.
-DEST="$DEST_FOLDER/$NOW"
+DEST="$DEST_FOLDER/_$NOW"
+DEST_DONE="$DEST_FOLDER/$NOW"
 PREVIOUS_DEST="$(fn_find_backups | head -n 1)"
 INPROGRESS_FILE="$DEST_FOLDER/backup.inprogress"
 MYPID="$$"
@@ -478,16 +479,12 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 		fi
 	fi
 
-	if [ -n "$PREVIOUS_DEST" ]; then
+
+	PREVIOUS_DEST_RUNNING="$(fn_find_backups _ | head -n 1)"
+	if [ -n "$PREVIOUS_DEST_RUNNING" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
-		# - 2nd to last backup becomes last backup.
 		fn_log_info "$SSH_DEST_FOLDER_PREFIX$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-		fn_run_cmd "mv -- $PREVIOUS_DEST $DEST"
-		if [ "$(fn_find_backups | wc -l)" -gt 1 ]; then
-			PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
-		else
-			PREVIOUS_DEST=""
-		fi
+		fn_run_cmd "mv -- $PREVIOUS_DEST_RUNNING $DEST"
 		# update PID to current process to avoid multiple concurrent resumes
 		fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
 	fi
@@ -613,8 +610,9 @@ while : ; do
 	# Add symlink to last backup
 	# -----------------------------------------------------------------------------
 
+	fn_run_cmd "mv -- '$DEST' '$DEST_DONE'"
 	fn_rm_file "$DEST_FOLDER/latest"
-	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+	fn_ln "$(basename -- "$DEST_DONE")" "$DEST_FOLDER/latest"
 
 	fn_rm_file "$INPROGRESS_FILE"
 
