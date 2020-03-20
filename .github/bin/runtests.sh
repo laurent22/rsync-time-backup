@@ -92,7 +92,7 @@ trap 'rm -f ${LOCK_FILE} 2>/dev/null || true ; wait ; exit 1 ;' SIGTERM
 trap 'rm -f ${LOCK_FILE} 2>/dev/null || true ; wait ; exit 1 ;' SIGQUIT
 trap 'rm -f ${LOCK_FILE} 2>/dev/null || true ; wait ; exit 1 ;' SIGINT
 trap 'rm -f ${LOCK_FILE} 2>/dev/null || true ; wait ; exit 1 ;' SIGKILL
-trap 'rm -f ${LOCK_FILE} 2>/dev/null || true ; wait ; exit 0 ;' EXIT
+trap 'rm -f ${LOCK_FILE} 2>/dev/null || true ; wait ; exit ${EXIT_CODE:-0} ;' EXIT
 # 
 touch ${LOCK_FILE} 2>/dev/null || exit 0 ;
 
@@ -103,6 +103,16 @@ export CI_TOOLS_BIN=$(dirname "${0}") ;
 export CI_TEST_ROOT=$(dirname ${PWD:-./}/.) ;
 
 ${CI_TOOLS_BIN}/pretests.sh
+
+function fn_test_pass() {
+	echo "... Passed" ;
+	return 0 ;
+}
+
+function fn_test_fail() {
+	echo "... FAILED" ;
+	return 1 ;
+} 1>&2
 
 function fn_test_cmd() {
 	local CI_TEST_CASE_RESULT=0 ;
@@ -116,14 +126,15 @@ function fn_test_cmd() {
 	return $CI_TEST_CASE_RESULT ;
 }
 
-date ;
 echo "TEST START" || EXIT_CODE=2 ;
+date ;
 
 echo "Example test for usage output" || EXIT_CODE=2 ;
-[[ ( $(fn_test_cmd ../../rsync_tmbackup.sh -h | grep -ci -oF "Usage:") -ge 1 ) ]] && echo "... Passed" || echo "... FAILED" ;
+[[ ( $(fn_test_cmd ../../rsync_tmbackup.sh -h | grep -ci -oF "Usage:") -ge 1 ) ]] && fn_test_pass || fn_test_fail || EXIT_CODE=1 ;
 
-echo "example fail test"
-[[ ( $( fn_test_cmd no such test ) ) ]] && echo "... Passed" || echo "... FAILED" ;
+echo "Example fail test"
+# the || true prevents the test from erroring because the fail is expected here: use || EXIT_CODE=1 for expected pass
+[[ ( $( fn_test_cmd no such test ) ) ]] && fn_test_pass || fn_test_fail || true ;
 
 
 cd "${CI_TEST_ROOT}" || true ;
@@ -134,6 +145,7 @@ cd "${CI_TEST_ROOT}" || true ;
 
 
 echo "TEST END" ;
+
 ### KEEP THIS LINE ###
 ${CI_TOOLS_BIN}/posttests.sh
 

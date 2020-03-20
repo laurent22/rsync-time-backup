@@ -13,8 +13,6 @@ jobs:
       run: test -x ./.github/bin/pretests.sh ;
     - name: Check Test Scripts
       run: test -x ./.github/bin/runtests.sh ;
-    - name: Check Linter Scripts
-      run: test -x ./.github/bin/styletests.sh ;
     - name: Check Post Test Scripts
       run: test -x ./.github/bin/posttests.sh ;
 
@@ -27,7 +25,7 @@ jobs:
     - name: Pre Test Setup
       run: ./.github/bin/pretests.sh || true ;
     - name: Run Tests
-      run: ./.github/bin/runtests.sh || true ;
+      run: ./.github/bin/runtests.sh ;
     - name: Post Test Clean
       run: ./.github/bin/posttests.sh || true ;
 
@@ -36,10 +34,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Pre Test Setup
-      run: ./.github/bin/pretests.sh || true ;
-    - name: Run Tests
-      run: ./.github/bin/styletests.sh || true ;
-    - name: Post Test Clean
-      run: ./.github/bin/posttests.sh || true ;
+    - name: shellcheck
+      uses: ludeeus/action-shellcheck@0.1.0
