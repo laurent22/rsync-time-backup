@@ -52,8 +52,11 @@ fn_display_usage() {
 	echo " --no-auto-expire       Disable automatically deleting backups when out of space. Instead an error"
 	echo "                        is logged, and the backup is aborted."
 	echo ""
-	echo "For more detailed help, please see the README file:"
+	echo "[exclude-pattern-file]  An optional exclude file can be provided as a third parameter."
+	echo "                        It should be compatible with the --exclude-from parameter of rsync. See:"
+	echo "                        https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option"
 	echo ""
+	echo "For more detailed help, please see the README file:"
 	echo "https://github.com/laurent22/rsync-time-backup/blob/master/README.md"
 }
 
@@ -119,10 +122,10 @@ fn_expire_backups() {
 				fi
 
 				if [ "$backup_dir" == "$oldest_backup_to_keep" ]; then
-					   # We dont't want to delete the oldest backup. It becomes first "last kept" backup
-					   last_kept_timestamp=$backup_timestamp
-					   # As we keep it we can skip processing it and go to the next oldest one in the loop
-					   continue
+						# We dont't want to delete the oldest backup. It becomes first "last kept" backup
+						last_kept_timestamp=$backup_timestamp
+						# As we keep it we can skip processing it and go to the next oldest one in the loop
+						continue
 				fi
 
 		# Find which strategy token applies to this particular backup
@@ -481,7 +484,8 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
 	if [ -n "$PREVIOUS_DEST" ]; then
 		# - Last backup is moved to current backup folder so that it can be resumed.
 		# - 2nd to last backup becomes last backup.
-		fn_log_info "$SSH_DEST_FOLDER_PREFIX$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
+		fn_log_info "$SSH_DEST_FOLDER_PREFIX$INPROGRESS_FILE already exists."
+		fn_log_info "--> The previous backup failed or was interrupted. Backup will resume from there."
 		fn_run_cmd "mv -- $PREVIOUS_DEST $DEST"
 		if [ "$(fn_find_backups | wc -l)" -gt 1 ]; then
 			PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
@@ -501,11 +505,14 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 	LINK_DEST_OPTION=""
+	BACKUP_TYPE=""
 	if [ -z "$PREVIOUS_DEST" ]; then
-		fn_log_info "No previous backup - creating new one."
+		fn_log_info "No previous (successfully) finished full backup found. Will [continue to] create a full backup."
+		BACKUP_TYPE="FULL (as opposed to 'incremental')"
 	else
 		# If the path is relative, it needs to be relative to the destination. To keep
 		# it simple, just use an absolute path. See http://serverfault.com/a/210058/118679
+		BACKUP_TYPE="INCREMENTAL [based on '$PREVIOUS_DEST']"
 		PREVIOUS_DEST="$(fn_get_absolute_path "$PREVIOUS_DEST")"
 		fn_log_info "Previous backup found - doing incremental backup from $SSH_DEST_FOLDER_PREFIX$PREVIOUS_DEST"
 		LINK_DEST_OPTION="--link-dest='$PREVIOUS_DEST'"
@@ -536,11 +543,13 @@ while : ; do
 	# Start backup
 	# -----------------------------------------------------------------------------
 
-	LOG_FILE="$LOG_DIR/$(date +"%Y-%m-%d-%H%M%S").log"
+	RSYNC_LOG_FILE="$LOG_DIR/$(date +"%Y-%m-%d-%H%M%S").log"
 
-	fn_log_info "Starting backup..."
-	fn_log_info "From: $SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/"
-	fn_log_info "To:   $SSH_DEST_FOLDER_PREFIX$DEST/"
+	fn_log_info "Launching $BACKUP_TYPE backup"
+	fn_log_info "  * From: $SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/"
+	fn_log_info "  * To:   $SSH_DEST_FOLDER_PREFIX$DEST/"
+	fn_log_info "Logging to '$RSYNC_LOG_FILE'"
+
 
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
@@ -552,7 +561,7 @@ while : ; do
 		fi
 	fi
 	CMD="$CMD $RSYNC_FLAGS"
-	CMD="$CMD --log-file '$LOG_FILE'"
+	CMD="$CMD --log-file '$RSYNC_LOG_FILE'"
 	if [ -n "$EXCLUSION_FILE" ]; then
 		# We've already checked that $EXCLUSION_FILE doesn't contain a single quote
 		CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
@@ -570,7 +579,7 @@ while : ; do
 	# Check if we ran out of space
 	# -----------------------------------------------------------------------------
 
-	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$LOG_FILE")"
+	NO_SPACE_LEFT="$(grep "No space left on device (28)\|Result too large (34)" "$RSYNC_LOG_FILE")"
 
 	if [ -n "$NO_SPACE_LEFT" ]; then
 
@@ -597,14 +606,14 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 	EXIT_CODE="1"
-	if [ -n "$(grep "rsync error:" "$LOG_FILE")" ]; then
-		fn_log_error "Rsync reported an error. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
-	elif [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
-		fn_log_warn "Rsync reported a warning. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
+	if [ -n "$(grep "rsync error:" "$RSYNC_LOG_FILE")" ]; then
+		fn_log_error "Rsync reported an error. Run this command for more details: grep -E 'rsync:|rsync error:' '$RSYNC_LOG_FILE'"
+	elif [ -n "$(grep "rsync:" "$RSYNC_LOG_FILE")" ]; then
+		fn_log_warn "Rsync reported a warning. Run this command for more details: grep -E 'rsync:|rsync error:' '$RSYNC_LOG_FILE'"
 	else
 		fn_log_info "Backup completed without errors."
 		if [[ $AUTO_DELETE_LOG == "1" ]]; then
-			rm -f -- "$LOG_FILE"
+			rm -f -- "$RSYNC_LOG_FILE"
 		fi
 		EXIT_CODE="0"
 	fi
@@ -620,3 +629,4 @@ while : ; do
 
 	exit $EXIT_CODE
 done
+
