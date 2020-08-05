@@ -452,8 +452,5 @@ while : ; do
     	fi
     	fn_rm_file "$INPROGRESS_FILE"
 
-    exit $EXIT_CODE
-
-
 	exit $EXIT_CODE
 done
