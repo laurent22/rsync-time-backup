@@ -441,14 +441,19 @@ while : ; do
 		EXIT_CODE="0"
 	fi
 
-	# -----------------------------------------------------------------------------
-	# Add symlink to last backup
-	# -----------------------------------------------------------------------------
+    	# -----------------------------------------------------------------------------
+    	# Add symlink to last backup if folder is not empty
+    	# -----------------------------------------------------------------------------
+    	if [ "$(ls -A "$DEST_FOLDER/$(basename -- "$DEST")")" ]; then
+        	fn_rm_file "$DEST_FOLDER/latest"
+        	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+    	else
+        	fn_rm_dir "$DEST_FOLDER/$(basename -- "$DEST")"
+    	fi
+    	fn_rm_file "$INPROGRESS_FILE"
 
-	fn_rm_file "$DEST_FOLDER/latest"
-	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+    exit $EXIT_CODE
 
-	fn_rm_file "$INPROGRESS_FILE"
 
 	exit $EXIT_CODE
 done
