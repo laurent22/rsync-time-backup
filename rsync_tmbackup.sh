@@ -131,6 +131,10 @@ fn_ln() {
 	fn_run_cmd "ln -s -- '$1' '$2'"
 }
 
+fn_ls() {
+        fn_run_cmd "ls -- '$1'"
+} 
+
 # -----------------------------------------------------------------------------
 # Source and destination information
 # -----------------------------------------------------------------------------
@@ -444,7 +448,7 @@ while : ; do
     	# -----------------------------------------------------------------------------
     	# Add symlink to last backup if folder is not empty
     	# -----------------------------------------------------------------------------
-    	if [ "$(ls -A "$DEST_FOLDER/$(basename -- "$DEST")")" ]; then
+    	if [ "$(fn_ls "$DEST_FOLDER/$(basename -- "$DEST")")" ]; then
         	fn_rm_file "$DEST_FOLDER/latest"
         	fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
     	else
