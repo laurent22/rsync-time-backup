@@ -369,7 +369,7 @@ if [ -n "$SSH_SRC_FOLDER" ]; then
 fi
 
 # Exit if source folder does not exist.
-if ! fn_test_file_exists_src ${SRC_FOLDER}; then
+if ! fn_test_file_exists_src "${SRC_FOLDER}"; then
 	fn_log_error "Source folder \"${SRC_FOLDER}\" does not exist - aborting."
 	exit 1
 fi
