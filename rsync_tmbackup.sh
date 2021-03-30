@@ -89,7 +89,7 @@ fn_expire_backup() {
 	fi
 
 	fn_log_info "Expiring $1"
-	fn_run_cmd "chmod -R u+w $1"
+	fn_run_cmd "chmod -R u+w '$1'"
 	fn_rm_dir "$1"
 }
 
