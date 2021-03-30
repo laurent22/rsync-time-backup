@@ -91,7 +91,7 @@ The script is designed so that only one backup operation can be active for a giv
 To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. It is also possible to add or remove options using the `--rsync-set-flags` option. For example, to exclude backing up permissions and groups:
 
 	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links \
-	--one-file-system --archive --no-perms --no-groups --itemize-changes" /src /dest
+	--one-file-system --archive --no-perms --no-group --itemize-changes" /src /dest
 
 ## No automatic backup expiration
 
