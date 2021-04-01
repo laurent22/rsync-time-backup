@@ -73,6 +73,7 @@ fn_parse_date() {
 			perl -e 'use Time::Local; print timelocal('$ss','$mi','$hh','$dd','$mm','$yy'),"\n";' ;;
 		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
 		FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+		freebsd*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
 	esac
 }
 
