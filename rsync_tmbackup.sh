@@ -174,28 +174,36 @@ fn_expire_backups() {
 
 fn_parse_ssh() {
 	# To keep compatibility with bash version < 3, we use grep
-	if echo "$DEST_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
+	if echo "$DEST_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]*@?[A-Za-z0-9.\-]+\:.+$'
 	then
-		SSH_USER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
-		SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
-		SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
+		SSH_USER=$(echo "$DEST_FOLDER" | sed -E  's/^(([A-Za-z0-9\._%\+\-]+)@)?([A-Za-z0-9.\-]+)\:(.+)$/\2/')
+		SSH_HOST=$(echo "$DEST_FOLDER" | sed -E  's/^(([A-Za-z0-9\._%\+\-]+)@)?([A-Za-z0-9.\-]+)\:(.+)$/\3/')
+		SSH_DEST_FOLDER=$(echo "$DEST_FOLDER" | sed -E  's/^(([A-Za-z0-9\._%\+\-]+)@)?([A-Za-z0-9.\-]+)\:(.+)$/\4/')
+		local id_rsa_option=""
 		if [ -n "$ID_RSA" ] ; then
-			SSH_CMD="ssh -p $SSH_PORT -i $ID_RSA ${SSH_USER}@${SSH_HOST}"
-		else
-			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+			id_rsa_option="-i $ID_RSA"
 		fi
-		SSH_DEST_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
-	elif echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]+@[A-Za-z0-9.\-]+\:.+$'
+		local ssh_user_option=""
+		if [ -n "$SSH_USER" ] ; then
+				ssh_user_option="${SSH_USER}@"
+		fi
+		SSH_CMD="ssh $SSH_PORT_OPTION ${id_rsa_option} ${ssh_user_option}${SSH_HOST}"
+		SSH_DEST_FOLDER_PREFIX="${ssh_user_option}${SSH_HOST}:"
+	elif echo "$SRC_FOLDER"|grep -Eq '^[A-Za-z0-9\._%\+\-]*@?[A-Za-z0-9.\-]+\:.+$'
 	then
-		SSH_USER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\1/')
-		SSH_HOST=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\2/')
-		SSH_SRC_FOLDER=$(echo "$SRC_FOLDER" | sed -E  's/^([A-Za-z0-9\._%\+\-]+)@([A-Za-z0-9.\-]+)\:(.+)$/\3/')
+		SSH_USER=$(echo "$SRC_FOLDER" | sed -E  's/^(([A-Za-z0-9\._%\+\-]+)@)?([A-Za-z0-9.\-]+)\:(.+)$/\2/')
+		SSH_HOST=$(echo "$SRC_FOLDER" | sed -E  's/^(([A-Za-z0-9\._%\+\-]+)@)?([A-Za-z0-9.\-]+)\:(.+)$/\3/')
+		SSH_SRC_FOLDER=$(echo "$SRC_FOLDER" | sed -E  's/^(([A-Za-z0-9\._%\+\-]+)@)?([A-Za-z0-9.\-]+)\:(.+)$/\4/')
+		local id_rsa_option=""
 		if [ -n "$ID_RSA" ] ; then
-			SSH_CMD="ssh -p $SSH_PORT -i $ID_RSA ${SSH_USER}@${SSH_HOST}"
-		else
-			SSH_CMD="ssh -p $SSH_PORT ${SSH_USER}@${SSH_HOST}"
+			id_rsa_option="-i $ID_RSA"
 		fi
-		SSH_SRC_FOLDER_PREFIX="${SSH_USER}@${SSH_HOST}:"
+		local ssh_user_option=""
+		if [ -n "$SSH_USER" ] ; then
+			ssh_user_option="${SSH_USER}@"
+		fi
+		SSH_CMD="ssh $SSH_PORT_OPTION ${id_rsa_option} ${ssh_user_option}${SSH_HOST}"
+		SSH_SRC_FOLDER_PREFIX="${ssh_user_option}${SSH_HOST}:"
 	fi
 }
 
@@ -268,7 +276,7 @@ SSH_SRC_FOLDER=""
 SSH_CMD=""
 SSH_DEST_FOLDER_PREFIX=""
 SSH_SRC_FOLDER_PREFIX=""
-SSH_PORT="22"
+SSH_PORT=""
 ID_RSA=""
 
 SRC_FOLDER=""
@@ -347,6 +355,12 @@ done
 if [[ -z "$SRC_FOLDER" || -z "$DEST_FOLDER" ]]; then
 	fn_display_usage
 	exit 1
+fi
+
+# Only pass the port option if a port was specified
+SSH_PORT_OPTION=""
+if [ -n "$SSH_PORT" ]; then
+  SSH_PORT_OPTION="-p $SSH_PORT"
 fi
 
 # Strips off last slash from dest. Note that it means the root folder "/"
@@ -546,9 +560,9 @@ while : ; do
 	if [ -n "$SSH_CMD" ]; then
 		RSYNC_FLAGS="$RSYNC_FLAGS --compress"
 		if [ -n "$ID_RSA" ] ; then
-			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+			CMD="$CMD  -e 'ssh $SSH_PORT_OPTION -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 		else
-			CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+			CMD="$CMD  -e 'ssh $SSH_PORT_OPTION -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 		fi
 	fi
 	CMD="$CMD $RSYNC_FLAGS"
