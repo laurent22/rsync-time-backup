@@ -60,19 +60,20 @@ fn_display_usage() {
 fn_parse_date() {
 	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
 	case "$OSTYPE" in
-		linux*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
-		cygwin*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
-		netbsd*) date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
-		darwin8*) yy=`expr ${1:0:4}`
-			mm=`expr ${1:5:2} - 1`
-			dd=`expr ${1:8:2}`
-			hh=`expr ${1:11:2}`
-			mi=`expr ${1:13:2}`
-			ss=`expr ${1:15:2}`
-			# Because under MacOS X Tiger 'date -j' doesn't work, we do this:
-			perl -e 'use Time::Local; print timelocal('$ss','$mi','$hh','$dd','$mm','$yy'),"\n";' ;;
-		darwin*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+		linux*|cygwin*|netbsd*)
+      date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
+		darwin*)
+			# Under MacOS X Tiger
+      # Or with GNU 'coreutils' installed (by homebrew)
+      #   'date -j' doesn't work, so we do this:
+      yy=$(expr ${1:0:4})
+			mm=$(expr ${1:5:2} - 1)
+			dd=$(expr ${1:8:2})
+			hh=$(expr ${1:11:2})
+			mi=$(expr ${1:13:2})
+			ss=$(expr ${1:15:2})
+			perl -e 'use Time::Local; print timelocal('$ss','$mi','$hh','$dd','$mm','$yy'),"\n";' ;;
 	esac
 }
 
