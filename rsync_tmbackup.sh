@@ -61,13 +61,13 @@ fn_parse_date() {
 	# Converts YYYY-MM-DD-HHMMSS to YYYY-MM-DD HH:MM:SS and then to Unix Epoch.
 	case "$OSTYPE" in
 		linux*|cygwin*|netbsd*)
-      date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
+			date -d "${1:0:10} ${1:11:2}:${1:13:2}:${1:15:2}" +%s ;;
 		FreeBSD*) date -j -f "%Y-%m-%d-%H%M%S" "$1" "+%s" ;;
 		darwin*)
 			# Under MacOS X Tiger
-      # Or with GNU 'coreutils' installed (by homebrew)
-      #   'date -j' doesn't work, so we do this:
-      yy=$(expr ${1:0:4})
+			# Or with GNU 'coreutils' installed (by homebrew)
+			#   'date -j' doesn't work, so we do this:
+			yy=$(expr ${1:0:4})
 			mm=$(expr ${1:5:2} - 1)
 			dd=$(expr ${1:8:2})
 			hh=$(expr ${1:11:2})
