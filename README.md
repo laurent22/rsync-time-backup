@@ -15,17 +15,22 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	Usage: rsync_tmbackup.sh [OPTION]... <[USER@HOST:]SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]
 
 	Options
-	 -p, --port           SSH port.
-	 -h, --help           Display this help message.
-	 --rsync-get-flags    Display the default rsync flags that are used for backup.
-	 --rsync-set-flags    Set the rsync flags that are going to be used for backup.
-	 --log-dir            Set the log file directory. If this flag is set, generated files will
-	                      not be managed by the script - in particular they will not be
-	                      automatically deleted.
-	 --strategy           Set the expiration strategy. Default: "1:1 30:7 365:30" means after one
-	                      day, keep one backup per day. After 30 days, keep one backup every 7 days.
-	                      After 365 days keep one backup every 30 days.
-	 --no-auto-expire     Set option to disable automatically purging old backups when out of space.
+	 -p, --port             SSH port.
+	 -h, --help             Display this help message.
+	 -i, --id_rsa           Specify the private ssh key to use.
+	 --rsync-get-flags      Display the default rsync flags that are used for backup. If using remote
+	                        drive over SSH, --compress will be added.
+	 --rsync-set-flags      Set the rsync flags that are going to be used for backup.
+	 --rsync-append-flags   Append the rsync flags that are going to be used for backup.
+	 --log-dir              Set the log file directory. If this flag is set, generated files will
+	                        not be managed by the script - in particular they will not be
+	                        automatically deleted.
+	                        Default: /home/backuper/.rsync_tmbackup
+	 --strategy             Set the expiration strategy. Default: "1:1 30:7 365:30" means after one
+	                        day, keep one backup per day. After 30 days, keep one backup every 7 days.
+	                        After 365 days keep one backup every 30 days.
+	 --no-auto-expire       Disable automatically deleting backups when out of space. Instead an error
+	                        is logged, and the backup is aborted.
 
 ## Features
 
@@ -88,10 +93,9 @@ The script is designed so that only one backup operation can be active for a giv
 
 ## Rsync options
 
-To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. It is also possible to add or remove options using the `--rsync-set-flags` option. For example, to exclude backing up permissions and groups:
+To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. It is also possible to add or remove options using the `--rsync-append-flags` or `--rsync-set-flags` option. For example, to exclude backing up permissions and groups:
 
-	rsync_tmbackup --rsync-set-flags "--numeric-ids --links --hard-links \
-	--one-file-system --archive --no-perms --no-group --itemize-changes" /src /dest
+	rsync_tmbackup --rsync-append-flags "--no-perms --no-group" /src /dest
 
 ## No automatic backup expiration
 
