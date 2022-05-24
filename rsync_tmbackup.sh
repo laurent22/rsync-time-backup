@@ -441,7 +441,7 @@ MYPID="$$"
 
 if [ ! -d "$LOG_DIR" ]; then
 	fn_log_info "Creating log folder in '$LOG_DIR'..."
-	mkdir -- "$LOG_DIR"
+	mkdir -p "$LOG_DIR"
 fi
 
 # -----------------------------------------------------------------------------
