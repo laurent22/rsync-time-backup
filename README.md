@@ -31,6 +31,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	                        After 365 days keep one backup every 30 days.
 	 --no-auto-expire       Disable automatically deleting backups when out of space. Instead an error
 	                        is logged, and the backup is aborted.
+	 --secure-ssh           Enables secure SSH features.
 
 ## Features
 
