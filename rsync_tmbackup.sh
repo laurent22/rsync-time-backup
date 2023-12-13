@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-APPNAME=$(basename $0 | sed "s/\.sh$//")
+APPNAME=$(basename "$0" | sed "s/\.sh$//")
 
 # -----------------------------------------------------------------------------
 # Log functions
@@ -32,7 +32,7 @@ trap 'fn_terminate_script' SIGINT
 # Small utility functions for reducing code duplication
 # -----------------------------------------------------------------------------
 fn_display_usage() {
-	echo "Usage: $(basename $0) [OPTION]... <[USER@HOST:]SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]"
+	echo "Usage: $(basename "$0") [OPTION]... <[USER@HOST:]SOURCE> <[USER@HOST:]DESTINATION> [exclude-pattern-file]"
 	echo ""
 	echo "Options"
 	echo " -p, --port             SSH port."
@@ -298,7 +298,7 @@ while :; do
 			;;
 		--rsync-get-flags)
 			shift
-			echo $RSYNC_FLAGS
+			echo "$RSYNC_FLAGS"
 			exit
 			;;
 		--rsync-set-flags)
