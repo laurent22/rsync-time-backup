@@ -614,11 +614,13 @@ while : ; do
 	# Add symlink to last backup
 	# -----------------------------------------------------------------------------
 	if [ "$EXIT_CODE" = 0 ]; then
+		# Create the latest symlink only when rsync succeeded
 		fn_rm_file "$DEST_FOLDER/latest"
 		fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
-	fi
 
-	fn_rm_file "$INPROGRESS_FILE"
+		# Remove .inprogress file only when rsync succeeded
+		fn_rm_file "$INPROGRESS_FILE"
+	fi
 
 	exit $EXIT_CODE
 done
