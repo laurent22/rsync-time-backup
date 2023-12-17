@@ -114,17 +114,17 @@ fn_expire_backups() {
 			continue
 		fi
 
-				if [ "$backup_dir" == "$backup_to_keep" ]; then
-						# this is the latest backup requsted to be kept. We can finish pruning
-						break
-				fi
+		if [ "$backup_dir" == "$backup_to_keep" ]; then
+			# this is the latest backup requsted to be kept. We can finish pruning
+			break
+		fi
 
-				if [ "$backup_dir" == "$oldest_backup_to_keep" ]; then
-					   # We dont't want to delete the oldest backup. It becomes first "last kept" backup
-					   last_kept_timestamp=$backup_timestamp
-					   # As we keep it we can skip processing it and go to the next oldest one in the loop
-					   continue
-				fi
+		if [ "$backup_dir" == "$oldest_backup_to_keep" ]; then
+			# We dont't want to delete the oldest backup. It becomes first "last kept" backup
+			last_kept_timestamp=$backup_timestamp
+			# As we keep it we can skip processing it and go to the next oldest one in the loop
+			continue
+		fi
 
 		# Find which strategy token applies to this particular backup
 		for strategy_token in $(echo $EXPIRATION_STRATEGY | tr " " "\n" | sort -r -n); do
@@ -526,11 +526,11 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 		if [ -n "$PREVIOUS_DEST" ]; then
-				# regardless of expiry strategy keep backup used for --link-dest
-				fn_expire_backups "$PREVIOUS_DEST"
+			# regardless of expiry strategy keep backup used for --link-dest
+			fn_expire_backups "$PREVIOUS_DEST"
 		else
-				# keep latest backup
-				fn_expire_backups "$DEST"
+			# keep latest backup
+			fn_expire_backups "$DEST"
 		fi
 
 	# -----------------------------------------------------------------------------
