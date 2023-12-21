@@ -409,11 +409,11 @@ fi
 #
 # The check is performed by taking the second row
 # of the output of the first command.
-if [[ "$(fn_df_t_src "${SRC_FOLDER}" | awk '{print $2}' | grep -c -i -e "fat")" -gt 0 ]]; then
+if [[ "$(fn_df_t_src "${SRC_FOLDER}/" | awk '{print $2}' | grep -c -i -e "fat")" -gt 0 ]]; then
 	fn_log_info "Source file-system is a version of FAT."
 	fn_log_info "Using the --modify-window rsync parameter with value 2."
 	RSYNC_FLAGS="${RSYNC_FLAGS} --modify-window=2"
-elif [[ "$(fn_df_t "${DEST_FOLDER}" | awk '{print $2}' | grep -c -i -e "fat")" -gt 0 ]]; then
+elif [[ "$(fn_df_t "${DEST_FOLDER}/" | awk '{print $2}' | grep -c -i -e "fat")" -gt 0 ]]; then
 	fn_log_info "Destination file-system is a version of FAT."
 	fn_log_info "Using the --modify-window rsync parameter with value 2."
 	RSYNC_FLAGS="${RSYNC_FLAGS} --modify-window=2"
@@ -547,9 +547,9 @@ while : ; do
 	if [ -n "$SSH_CMD" ]; then
 		RSYNC_FLAGS="$RSYNC_FLAGS --compress"
 		if [ -n "$ID_RSA" ] ; then
-			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no'"
 		else
-			CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+			CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no'"
 		fi
 	fi
 	CMD="$CMD $RSYNC_FLAGS"
