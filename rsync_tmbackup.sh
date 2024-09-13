@@ -566,6 +566,7 @@ while : ; do
 
 	fn_run_cmd "echo $MYPID > $INPROGRESS_FILE"
 	eval $CMD
+	CMD_RETURNCODE=$?
 
 	# -----------------------------------------------------------------------------
 	# Check if we ran out of space
@@ -602,6 +603,8 @@ while : ; do
 		fn_log_error "Rsync reported an error. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
 	elif [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
 		fn_log_warn "Rsync reported a warning. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
+	elif [ $CMD_RETURNCODE -ne 0 ]; then
+		fn_log_error "Rsync returned non-zero return code, backup failed."
 	else
 		fn_log_info "Backup completed without errors."
 		if [[ $AUTO_DELETE_LOG == "1" ]]; then
