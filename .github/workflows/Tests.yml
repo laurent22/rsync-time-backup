@@ -1,0 +1,45 @@
+name: CI
+
+on: [push]
+
+jobs:
+  META:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check Pre Test Setup Script
+      run: test -x ./.github/bin/pretests.sh ;
+    - name: Check Test Scripts
+      run: test -x ./.github/bin/runtests.sh ;
+    - name: Check Linter Scripts
+      run: test -x ./.github/bin/styletests.sh ;
+    - name: Check Post Test Scripts
+      run: test -x ./.github/bin/posttests.sh ;
+
+  MATS:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Pre Test Setup
+      run: ./.github/bin/pretests.sh || true ;
+    - name: Run Tests
+      run: ./.github/bin/runtests.sh ;
+    - name: Post Test Clean
+      run: ./.github/bin/posttests.sh || true ;
+
+  STYLE:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Pre Test Setup
+      run: ./.github/bin/pretests.sh || true ;
+    - name: Run Tests
+      run: ./.github/bin/styletests.sh || true ;
+    - name: Post Test Clean
+      run: ./.github/bin/posttests.sh || true ;
