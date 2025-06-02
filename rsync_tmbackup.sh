@@ -54,6 +54,7 @@ fn_display_usage() {
 	echo "                        After 365 days keep one backup every 30 days."
 	echo " --no-auto-expire       Disable automatically deleting backups when out of space. Instead an error"
 	echo "                        is logged, and the backup is aborted."
+	echo " --secure-ssh           Enables secure SSH features."
 	echo ""
 	echo "For more detailed help, please see the README file:"
 	echo ""
@@ -283,6 +284,7 @@ AUTO_DELETE_LOG="1"
 LOG_TO_DEST="0"
 EXPIRATION_STRATEGY="1:1 30:7 365:30"
 AUTO_EXPIRE="1"
+SECURE_SSH="0"
 
 RSYNC_FLAGS="-D --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 
@@ -328,6 +330,9 @@ while :; do
 			;;
 		--no-auto-expire)
 			AUTO_EXPIRE="0"
+			;;
+		--secure-ssh)
+			SECURE_SSH="1"
 			;;
 		--)
 			shift
@@ -555,13 +560,18 @@ while : ; do
 	fn_log_info "From: $SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/"
 	fn_log_info "To:   $SSH_DEST_FOLDER_PREFIX$DEST/"
 
+	SSH_FLAGS=""
+	if [[ $SECURE_SSH == "0" ]]; then
+		SSH_FLAGS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+	fi
+
 	CMD="rsync"
 	if [ -n "$SSH_CMD" ]; then
 		RSYNC_FLAGS="$RSYNC_FLAGS --compress"
 		if [ -n "$ID_RSA" ] ; then
-			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+			CMD="$CMD  -e 'ssh -p $SSH_PORT -i $ID_RSA $SSH_FLAGS'"
 		else
-			CMD="$CMD  -e 'ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+			CMD="$CMD  -e 'ssh -p $SSH_PORT $SSH_FLAGS'"
 		fi
 	fi
 	CMD="$CMD $RSYNC_FLAGS"
