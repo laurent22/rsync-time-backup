@@ -26,5 +26,12 @@ $d->sub(new DateInterval('P' . $totalDays . 'D'));
 
 for ($i = 0; $i < $backupsPerDay * $totalDays; $i++) {
 	$d->add(new DateInterval($intervalBetweenBackups));
-	mkdir($destDir . '/' . $d->format('Y-m-d-His'), 0777, true);
+	$d2 = clone $d;
+	$dummyRand = cos($i);
+	$tolI = new DateInterval('PT' . intval(abs(1 - $dummyRand) * 3600 * 0.2) . 'S');
+	if ($dummyRand < 0) {
+		$tolI->invert = 1;
+	}
+	$d2->add($tolI);
+	mkdir($destDir . '/' . $d2->format('Y-m-d-His'), 0777, true);
 }
