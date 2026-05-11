@@ -118,6 +118,12 @@ fn_expire_backup() {
         fi
 
         fn_log_info "Expiring $1"
+        # Sanitize permissions before deletion: snapshots may contain files/dirs
+        # without owner write bit (e.g. ISPConfig .php-fcgi-starter at 0500,
+        # web1/ at 0550) that would make `rm -rf` fail. Only safe on local dest.
+        if [ -z "$SSH_DEST_FOLDER_PREFIX" ]; then
+                fn_fix_permissions "$1"
+        fi
         fn_rm_dir "$1"
 }
 
@@ -299,38 +305,29 @@ fn_df_t() {
         fn_run_cmd "df -T '${1}'"
 }
 
-# Function to set permissions on the last used directory
+# Function to set permissions on a backup directory tree.
+# Covers any dir or file lacking owner write (u+w) — this includes the legacy
+# narrow cases (0111, 000) plus 0500/0550/0700/0710 typical of ISPConfig,
+# /root/, /etc/ssl/private/, etc.
 fn_fix_permissions() {
     local base_dir="$1"
+    local sudo_cmd=""
+
+    if [ "$SUDO" = true ]; then
+        sudo_cmd="sudo"
+    fi
 
     fn_log_info "Fixing permissions in directory: $base_dir"
 
-    if [ "$SUDO" = true ]; then
-        if ! find "$base_dir" -type d -perm 0111 -exec sudo chmod 700 {} \;; then
-            fn_log_error "Failed to set permissions on some directories"
-            exit 1
-        fi
-        if ! find "$base_dir" -type d -perm 000 -exec sudo chmod 700 {} \;; then
-            fn_log_error "Failed to set permissions on some directories"
-            exit 1
-        fi
-        if ! find "$base_dir" -type f -perm 000 -exec sudo chmod 600 {} \;; then
-            fn_log_error "Failed to set permissions on some files"
-            exit 1
-        fi
-    else
-        if ! find "$base_dir" -type d -perm 0111 -exec chmod 700 {} \;; then
-            fn_log_error "Failed to set permissions on some directories"
-            exit 1
-        fi
-        if ! find "$base_dir" -type d -perm 000 -exec chmod 700 {} \;; then
-            fn_log_error "Failed to set permissions on some directories"
-            exit 1
-        fi
-        if ! find "$base_dir" -type f -perm 000 -exec chmod 600 {} \;; then
-            fn_log_error "Failed to set permissions on some files"
-            exit 1
-        fi
+    # Any dir without u+w → grant u+rwX so we can traverse and remove
+    if ! find "$base_dir" -type d ! -perm -u=w -exec $sudo_cmd chmod u+rwX {} +; then
+        fn_log_error "Failed to set permissions on some directories"
+        exit 1
+    fi
+    # Any file without u+w → grant u+rw
+    if ! find "$base_dir" -type f ! -perm -u=w -exec $sudo_cmd chmod u+rw {} +; then
+        fn_log_error "Failed to set permissions on some files"
+        exit 1
     fi
 
     fn_log_info "Permissions fixed successfully"
