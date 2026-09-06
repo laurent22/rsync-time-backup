@@ -610,10 +610,10 @@ while : ; do
 	# -----------------------------------------------------------------------------
 
 	EXIT_CODE="1"
-	if [ -n "$(grep "rsync error:" "$LOG_FILE")" ]; then
-		fn_log_error "Rsync reported an error. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
-	elif [ -n "$(grep "rsync:" "$LOG_FILE")" ]; then
-		fn_log_warn "Rsync reported a warning. Run this command for more details: grep -E 'rsync:|rsync error:' '$LOG_FILE'"
+	if [ -n "$(grep -E "rsync error:|rsync\([0-9]+\): error:" "$LOG_FILE")" ]; then
+		fn_log_error "Rsync reported an error. Run this command for more details: grep -E 'rsync error:|rsync\([0-9]+\): (error|warning):' '$LOG_FILE'"
+	elif [ -n "$(grep -E "rsync:|rsync\([0-9]+\): warning:" "$LOG_FILE")" ]; then
+		fn_log_warn "Rsync reported a warning. Run this command for more details: grep -E 'rsync:|rsync\([0-9]+\): (error|warning):' '$LOG_FILE'"
 	else
 		fn_log_info "Backup completed without errors."
 		if [[ $AUTO_DELETE_LOG == "1" ]]; then
